@@ -40,7 +40,7 @@ function renderInvestorTable() {
 
   let html = '';
   filtered.forEach((inv, idx) => {
-    const name = inv.name || 'Unknown';
+    const name = inv.name || inv.canonical_name || (inv.aliases && inv.aliases[0]) || 'Unknown';
     const safeName = escapeHtml(name);
     const accel = inv.is_accelerating
       ? '<span class="badge-accelerating">Yes</span>'
@@ -51,7 +51,7 @@ function renderInvestorTable() {
       '<td class="investor-name-cell">' + safeName + '</td>' +
       '<td>' + (inv.total_purchases || 0).toLocaleString() + '</td>' +
       '<td>' + formatMoney(inv.total_spend) + '</td>' +
-      '<td>' + escapeHtml(inv.top_neighborhood || 'N/A') + '</td>' +
+      '<td>' + escapeHtml(inv.top_neighborhood || (inv.neighborhoods && Object.keys(inv.neighborhoods).sort((a,b) => inv.neighborhoods[b] - inv.neighborhoods[a])[0]) || 'N/A') + '</td>' +
       '<td>' + formatDate(inv.last_purchase) + '</td>' +
       '<td class="text-center">' + accel + '</td>' +
       '<td>' +
@@ -77,7 +77,7 @@ function renderInvestorCards() {
 
   let html = '';
   filtered.forEach((inv, idx) => {
-    const name = inv.name || 'Unknown';
+    const name = inv.name || inv.canonical_name || (inv.aliases && inv.aliases[0]) || 'Unknown';
     const safeName = escapeHtml(name);
     const accel = inv.is_accelerating
       ? '<span class="badge-accelerating">Accelerating</span>'
@@ -91,7 +91,7 @@ function renderInvestorCards() {
       '<div class="data-card-grid">' +
         '<div class="data-card-stat"><span class="data-card-label">Purchases</span><span class="data-card-value">' + (inv.total_purchases || 0).toLocaleString() + '</span></div>' +
         '<div class="data-card-stat"><span class="data-card-label">Total Spend</span><span class="data-card-value">' + formatMoney(inv.total_spend) + '</span></div>' +
-        '<div class="data-card-stat"><span class="data-card-label">Top Area</span><span class="data-card-value">' + escapeHtml(inv.top_neighborhood || 'N/A') + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Top Area</span><span class="data-card-value">' + escapeHtml(inv.top_neighborhood || (inv.neighborhoods && Object.keys(inv.neighborhoods).sort((a,b) => inv.neighborhoods[b] - inv.neighborhoods[a])[0]) || 'N/A') + '</span></div>' +
         '<div class="data-card-stat"><span class="data-card-label">Status</span><span class="data-card-value">' + accel + '</span></div>' +
       '</div>' +
       '<div class="data-card-actions">' +
@@ -110,8 +110,8 @@ function getFilteredInvestors() {
   if (investorSearchText) {
     const q = investorSearchText.toLowerCase();
     filtered = filtered.filter(inv => {
-      const name = (inv.name || '').toLowerCase();
-      const hood = (inv.top_neighborhood || '').toLowerCase();
+      const name = (inv.name || inv.canonical_name || '').toLowerCase();
+      const hood = (inv.top_neighborhood || (inv.neighborhoods && Object.keys(inv.neighborhoods).sort((a,b) => inv.neighborhoods[b] - inv.neighborhoods[a])[0]) || '').toLowerCase();
       return name.includes(q) || hood.includes(q) ||
         (inv.aliases || []).some(a => String(a).toLowerCase().includes(q));
     });
@@ -202,7 +202,7 @@ async function showInvestorDetail(investorName) {
   const priceRange = inv.price_range || {};
 
   let html = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>';
-  html += '<h2>' + escapeHtml(inv.name || investorName) + '</h2>';
+  html += '<h2>' + escapeHtml(inv.name || inv.canonical_name || investorName) + '</h2>';
 
   // Stats grid
   html += '<div id="investor-detail-stats">';
