@@ -15,6 +15,11 @@ const APP = {
   pipeline: []
 };
 
+// Detect mobile
+function isMobile() {
+  return window.innerWidth < 768;
+}
+
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -31,6 +36,26 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// Accordion toggle logic
+function initAccordions() {
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const targetId = 'accordion-' + header.dataset.accordion;
+      const body = document.getElementById(targetId);
+      if (!body) return;
+
+      const isOpen = header.classList.contains('open');
+      if (isOpen) {
+        header.classList.remove('open');
+        body.classList.remove('open');
+      } else {
+        header.classList.add('open');
+        body.classList.add('open');
+      }
+    });
+  });
+}
+
 // Fetch helper with loading state management
 async function fetchAPI(endpoint) {
   try {
@@ -39,7 +64,12 @@ async function fetchAPI(endpoint) {
       console.error('API response not OK:', resp.status, endpoint);
       return [];
     }
-    return await resp.json();
+    const json = await resp.json();
+    // Unwrap {data: [...]} wrapper from static JSON files
+    if (json && json.data && !Array.isArray(json) && typeof json.data === 'object') {
+      return json.data;
+    }
+    return json;
   } catch (e) {
     console.error('API error:', endpoint, e);
     return [];
@@ -119,7 +149,17 @@ async function loadNeighborhoods() {
     filtered = filtered.filter(n => (n.name || '').toLowerCase().includes(q));
   }
 
-  // Build the neighborhood grid cards
+  renderNeighborhoodGrid(filtered);
+
+  // Load opportunities
+  loadOpportunities();
+}
+
+// Render neighborhood grid
+function renderNeighborhoodGrid(filtered) {
+  const grid = document.getElementById('neighborhood-grid');
+  if (!grid) return;
+
   let html = '';
   filtered.forEach(n => {
     const momentum = n.momentum_score != null ? n.momentum_score.toFixed(1) : 'N/A';
@@ -141,9 +181,6 @@ async function loadNeighborhoods() {
     '</div>';
   });
   grid.innerHTML = html;
-
-  // Load opportunities
-  loadOpportunities();
 }
 
 // Wire up neighborhood search
@@ -152,32 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       if (APP.neighborhoods.length > 0) {
-        // Re-render with filter
-        const grid = document.getElementById('neighborhood-grid');
-        if (!grid) return;
         const q = searchInput.value.toLowerCase();
         const filtered = APP.neighborhoods.filter(n =>
           (n.name || '').toLowerCase().includes(q)
         );
-        let html = '';
-        filtered.forEach(n => {
-          const momentum = n.momentum_score != null ? n.momentum_score.toFixed(1) : 'N/A';
-          const momentumClass = n.momentum_score > 50 ? 'momentum-high' :
-                                n.momentum_score > 30 ? 'momentum-mid' : 'momentum-low';
-          html += '<div class="neighborhood-card">' +
-            '<div class="card-header">' +
-              '<div class="card-name">' + escapeHtmlGlobal(n.name || 'Unknown') + '</div>' +
-              '<span class="card-badge ' + momentumClass + '">' + momentum + '</span>' +
-            '</div>' +
-            '<div class="card-stats">' +
-              '<div class="card-stat"><span class="card-stat-label">Sales (12mo)</span><span class="card-stat-value">' + (n.sales_volume_12mo || 0) + '</span></div>' +
-              '<div class="card-stat"><span class="card-stat-label">Median Price</span><span class="card-stat-value">' + formatMoney(n.median_price_recent) + '</span></div>' +
-              '<div class="card-stat"><span class="card-stat-label">Permits</span><span class="card-stat-value">' + (n.permit_count || 0) + '</span></div>' +
-              '<div class="card-stat"><span class="card-stat-label">Price Trend</span><span class="card-stat-value">' + (n.median_price_trend != null ? (n.median_price_trend > 0 ? '+' : '') + n.median_price_trend.toFixed(1) + '%' : 'N/A') + '</span></div>' +
-            '</div>' +
-          '</div>';
-        });
-        grid.innerHTML = html;
+        renderNeighborhoodGrid(filtered);
       }
     });
   }
@@ -221,6 +237,7 @@ function escapeHtmlGlobal(str) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  initAccordions();
   loadStats();
   initMap();
   initFilters();

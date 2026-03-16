@@ -7,12 +7,14 @@ let contractorSpecialtyFilter = '';
 
 async function loadContractors() {
   const tbody = document.getElementById('contractor-tbody');
-  if (!tbody) return;
+  const cards = document.getElementById('contractor-cards');
+  if (!tbody && !cards) return;
 
   // Avoid reloading if already populated
-  if (APP.contractors.length > 0 && tbody.children.length > 0) return;
+  if (APP.contractors.length > 0 && ((tbody && tbody.children.length > 0) || (cards && cards.children.length > 0))) return;
 
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading contractors...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading contractors...</td></tr>';
+  if (cards) cards.innerHTML = '<div class="loading">Loading contractors...</div>';
 
   let url = '/api/contractors?top=500';
   const data = await fetchAPI(url);
@@ -20,6 +22,7 @@ async function loadContractors() {
 
   renderContractorStats();
   renderContractorTable();
+  renderContractorCards();
   wireContractorControls();
 }
 
@@ -49,10 +52,7 @@ function renderContractorStats() {
     '</div>';
 }
 
-function renderContractorTable() {
-  const tbody = document.getElementById('contractor-tbody');
-  if (!tbody) return;
-
+function getFilteredContractors() {
   let filtered = APP.contractors;
 
   if (contractorSearchText) {
@@ -70,6 +70,15 @@ function renderContractorTable() {
       Object.keys(c.specialties || {}).some(s => s.toLowerCase().includes(q))
     );
   }
+
+  return filtered;
+}
+
+function renderContractorTable() {
+  const tbody = document.getElementById('contractor-tbody');
+  if (!tbody) return;
+
+  let filtered = getFilteredContractors();
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No contractors found.</td></tr>';
@@ -93,20 +102,57 @@ function renderContractorTable() {
   tbody.innerHTML = html;
 }
 
+function renderContractorCards() {
+  const cards = document.getElementById('contractor-cards');
+  if (!cards) return;
+
+  let filtered = getFilteredContractors();
+
+  if (filtered.length === 0) {
+    cards.innerHTML = '<div class="empty-state">No contractors found.</div>';
+    return;
+  }
+
+  let html = '';
+  filtered.slice(0, 200).forEach((c, idx) => {
+    html += '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-title">' + escapeHtmlGlobal(c.name || 'N/A') + '</div>' +
+        '<span class="data-card-rank">#' + (idx + 1) + '</span>' +
+      '</div>' +
+      '<div class="data-card-grid">' +
+        '<div class="data-card-stat"><span class="data-card-label">Permits</span><span class="data-card-value">' + (c.total_permits || 0).toLocaleString() + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Properties</span><span class="data-card-value">' + (c.properties_served || 0).toLocaleString() + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Specialty</span><span class="data-card-value">' + escapeHtmlGlobal(c.top_specialty || 'N/A') + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Top Area</span><span class="data-card-value">' + escapeHtmlGlobal(c.top_neighborhood || 'N/A') + '</span></div>' +
+      '</div>' +
+      (c.contact_name ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Contact: ' + escapeHtmlGlobal(c.contact_name) + '</div>' : '') +
+      '<div class="data-card-actions">' +
+        '<button class="btn-view" onclick="showContractorDetail(' + idx + ')">View Details</button>' +
+      '</div>' +
+    '</div>';
+  });
+  cards.innerHTML = html;
+}
+
 function wireContractorControls() {
   const search = document.getElementById('contractor-search');
-  if (search) {
+  if (search && !search._wired) {
+    search._wired = true;
     search.addEventListener('input', (e) => {
       contractorSearchText = e.target.value;
       renderContractorTable();
+      renderContractorCards();
     });
   }
 
   const specialty = document.getElementById('contractor-specialty-filter');
-  if (specialty) {
+  if (specialty && !specialty._wired) {
+    specialty._wired = true;
     specialty.addEventListener('change', (e) => {
       contractorSpecialtyFilter = e.target.value;
       renderContractorTable();
+      renderContractorCards();
     });
   }
 }
@@ -117,13 +163,17 @@ function showContractorDetail(idx) {
 
   const detail = document.getElementById('contractor-detail');
   const tableWrap = document.getElementById('contractor-table-wrap');
+  const cardsWrap = document.getElementById('contractor-cards');
+  const statsBar = document.getElementById('contractor-stats-bar');
   if (!detail) return;
 
   detail.classList.remove('hidden');
   if (tableWrap) tableWrap.classList.add('hidden');
+  if (cardsWrap) cardsWrap.classList.add('hidden');
+  if (statsBar) statsBar.classList.add('hidden');
 
   let html = '<button class="btn btn-secondary" onclick="closeContractorDetail()">Back to List</button>';
-  html += '<h2>' + escapeHtmlGlobal(c.name) + '</h2>';
+  html += '<h2 style="font-size:18px;font-weight:700;margin:12px 0 16px">' + escapeHtmlGlobal(c.name) + '</h2>';
 
   // Stats
   html += '<div class="detail-stats-grid">';
@@ -137,7 +187,7 @@ function showContractorDetail(idx) {
   // Specialties
   const specEntries = Object.entries(c.specialties || {}).sort((a, b) => b[1] - a[1]);
   if (specEntries.length > 0) {
-    html += '<h3>Specialties</h3><div class="hood-breakdown">';
+    html += '<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin-bottom:8px">Specialties</h3><div class="hood-breakdown">';
     specEntries.forEach(([name, count]) => {
       html += '<div class="hood-row"><span class="hood-name">' + escapeHtmlGlobal(name) + '</span><span class="hood-count">' + count + ' permits</span></div>';
     });
@@ -147,7 +197,7 @@ function showContractorDetail(idx) {
   // Neighborhoods
   const hoodEntries = Object.entries(c.neighborhoods || {}).sort((a, b) => b[1] - a[1]);
   if (hoodEntries.length > 0) {
-    html += '<h3>Neighborhoods</h3><div class="hood-breakdown">';
+    html += '<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin:12px 0 8px">Neighborhoods</h3><div class="hood-breakdown">';
     hoodEntries.slice(0, 20).forEach(([name, count]) => {
       html += '<div class="hood-row"><span class="hood-name">' + escapeHtmlGlobal(name) + '</span><span class="hood-count">' + count + ' permits</span></div>';
     });
@@ -157,7 +207,7 @@ function showContractorDetail(idx) {
   // Recent permits
   const permits = c.recent_permits || [];
   if (permits.length > 0) {
-    html += '<h3>Recent Permits (' + permits.length + ')</h3>';
+    html += '<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-secondary);margin:12px 0 8px">Recent Permits (' + permits.length + ')</h3>';
     html += '<div class="table-scroll"><table class="inner-table"><thead><tr><th>ID</th><th>Address</th><th>Type</th><th>Date</th><th>Work</th></tr></thead><tbody>';
     permits.forEach(p => {
       html += '<tr>' +
@@ -177,6 +227,10 @@ function showContractorDetail(idx) {
 function closeContractorDetail() {
   const detail = document.getElementById('contractor-detail');
   const tableWrap = document.getElementById('contractor-table-wrap');
+  const cardsWrap = document.getElementById('contractor-cards');
+  const statsBar = document.getElementById('contractor-stats-bar');
   if (detail) detail.classList.add('hidden');
   if (tableWrap) tableWrap.classList.remove('hidden');
+  if (cardsWrap) cardsWrap.classList.remove('hidden');
+  if (statsBar) statsBar.classList.remove('hidden');
 }

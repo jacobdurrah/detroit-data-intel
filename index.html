@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
   <title>Detroit Data Intel</title>
 
   <!-- Leaflet CSS -->
@@ -43,58 +46,76 @@
   <div id="app">
     <!-- MAP TAB -->
     <div id="tab-map" class="tab-content active">
-      <!-- Sidebar for filters -->
+      <!-- Sidebar: collapsible accordions for layers/filters -->
       <aside id="sidebar">
-        <h3>Layers</h3>
-        <div id="layer-toggles">
-          <label><input type="checkbox" data-layer="sales" checked> Property Sales</label>
-          <label><input type="checkbox" data-layer="permits"> Building Permits</label>
-          <label><input type="checkbox" data-layer="dlba"> DLBA Properties</label>
-          <label><input type="checkbox" data-layer="blight"> Blight Tickets</label>
-          <label><input type="checkbox" data-layer="demos"> Demolitions</label>
-          <label><input type="checkbox" data-layer="rentals"> Rentals</label>
-          <label><input type="checkbox" data-layer="crime"> Crime/911</label>
-          <label><input type="checkbox" data-layer="vacant"> Vacant Properties</label>
-          <label><input type="checkbox" data-layer="presale"> Presale Inspections</label>
-          <label><input type="checkbox" data-layer="trades"> Trades Permits</label>
-          <label><input type="checkbox" data-layer="investors"> Top Investor Purchases</label>
+        <!-- Layers Accordion -->
+        <div class="accordion-header open" data-accordion="layers">
+          <h3>Layers</h3>
+          <span class="accordion-arrow">&#9660;</span>
         </div>
-        <label><input type="checkbox" id="heatmap-toggle"> Heatmap Mode</label>
+        <div class="accordion-body open" id="accordion-layers">
+          <div class="accordion-body-inner">
+            <div id="layer-toggles">
+              <label><input type="checkbox" data-layer="sales" checked> Sales</label>
+              <label><input type="checkbox" data-layer="permits"> Permits</label>
+              <label><input type="checkbox" data-layer="dlba"> DLBA</label>
+              <label><input type="checkbox" data-layer="blight"> Blight</label>
+              <label><input type="checkbox" data-layer="demos"> Demos</label>
+              <label><input type="checkbox" data-layer="rentals"> Rentals</label>
+              <label><input type="checkbox" data-layer="crime"> Crime/911</label>
+              <label><input type="checkbox" data-layer="vacant"> Vacant</label>
+              <label><input type="checkbox" data-layer="presale"> Presale</label>
+              <label><input type="checkbox" data-layer="trades"> Trades</label>
+              <label><input type="checkbox" data-layer="investors"> Investors</label>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;padding:8px 4px;font-size:12px;cursor:pointer;margin-top:4px"><input type="checkbox" id="heatmap-toggle"> Heatmap Mode</label>
+          </div>
+        </div>
 
-        <h3>Filters</h3>
-        <div id="filters">
-          <div class="filter-group">
-            <label>Date Range</label>
-            <input type="date" id="filter-start-date">
-            <input type="date" id="filter-end-date">
+        <!-- Filters Accordion -->
+        <div class="accordion-header" data-accordion="filters">
+          <h3>Filters</h3>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body" id="accordion-filters">
+          <div class="accordion-body-inner">
+            <div id="filters">
+              <div class="filter-group">
+                <label>Date Range</label>
+                <input type="date" id="filter-start-date">
+                <input type="date" id="filter-end-date">
+              </div>
+              <div class="filter-group">
+                <label>Price Range</label>
+                <input type="number" id="filter-min-price" placeholder="Min $">
+                <input type="number" id="filter-max-price" placeholder="Max $">
+              </div>
+              <div class="filter-group">
+                <label>Investor/Grantee</label>
+                <input type="text" id="filter-grantee" placeholder="Search name..." list="grantee-list">
+                <datalist id="grantee-list"></datalist>
+              </div>
+              <div class="filter-group">
+                <label>Deed Type</label>
+                <select id="filter-deed-type">
+                  <option value="">All</option>
+                  <option value="WARRANTY">Warranty</option>
+                  <option value="QUIT CLAIM">Quit Claim</option>
+                  <option value="COVENANT">Covenant</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label>Neighborhood</label>
+                <select id="filter-neighborhood">
+                  <option value="">All</option>
+                </select>
+              </div>
+              <div class="filter-buttons">
+                <button id="apply-filters" class="btn">Apply</button>
+                <button id="clear-filters" class="btn btn-secondary">Clear</button>
+              </div>
+            </div>
           </div>
-          <div class="filter-group">
-            <label>Price Range</label>
-            <input type="number" id="filter-min-price" placeholder="Min $">
-            <input type="number" id="filter-max-price" placeholder="Max $">
-          </div>
-          <div class="filter-group">
-            <label>Investor/Grantee</label>
-            <input type="text" id="filter-grantee" placeholder="Search name..." list="grantee-list">
-            <datalist id="grantee-list"></datalist>
-          </div>
-          <div class="filter-group">
-            <label>Deed Type</label>
-            <select id="filter-deed-type">
-              <option value="">All</option>
-              <option value="WARRANTY">Warranty</option>
-              <option value="QUIT CLAIM">Quit Claim</option>
-              <option value="COVENANT">Covenant</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Neighborhood</label>
-            <select id="filter-neighborhood">
-              <option value="">All</option>
-            </select>
-          </div>
-          <button id="apply-filters" class="btn">Apply Filters</button>
-          <button id="clear-filters" class="btn btn-secondary">Clear</button>
         </div>
       </aside>
 
@@ -113,6 +134,9 @@
             <option value="total_spend">Total Spend</option>
           </select>
         </div>
+        <!-- Mobile cards -->
+        <div id="investor-cards"></div>
+        <!-- Desktop table -->
         <div id="investor-table-wrap">
           <table id="investor-table">
             <thead>
@@ -177,6 +201,9 @@
           </div>
         </div>
         <div id="contractor-stats-bar"></div>
+        <!-- Mobile cards -->
+        <div id="contractor-cards"></div>
+        <!-- Desktop table -->
         <div id="contractor-table-wrap">
           <table id="contractor-table">
             <thead>
@@ -206,15 +233,22 @@
           <h2>Deal Pipeline</h2>
           <p class="panel-subtitle">Motivated sellers matched to investor profiles</p>
           <div class="panel-controls">
-            <label>Min Score: <input type="number" id="pipeline-min-score" value="20" min="0" max="100" style="width:60px"></label>
+            <label style="font-size:13px;color:var(--text-secondary)">Min Score:
+              <input type="number" id="pipeline-min-score" value="20" min="0" max="100" style="width:70px;margin-left:4px">
+            </label>
             <select id="pipeline-neighborhood-filter">
               <option value="">All Neighborhoods</option>
             </select>
-            <button id="pipeline-apply" class="btn">Filter</button>
-            <button id="pipeline-export" class="btn btn-secondary">Export CSV</button>
+            <div class="panel-controls-row">
+              <button id="pipeline-apply" class="btn">Filter</button>
+              <button id="pipeline-export" class="btn btn-secondary">Export CSV</button>
+            </div>
           </div>
         </div>
         <div id="pipeline-stats-bar"></div>
+        <!-- Mobile cards -->
+        <div id="pipeline-cards"></div>
+        <!-- Desktop table -->
         <div id="pipeline-table-wrap">
           <table id="pipeline-table">
             <thead>

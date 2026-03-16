@@ -9,50 +9,29 @@ let investorSearchText = '';
 // Load investors into the investor table
 async function loadInvestors() {
   const tbody = document.getElementById('investor-tbody');
-  if (!tbody) return;
+  const cards = document.getElementById('investor-cards');
+  if (!tbody && !cards) return;
 
   // Avoid reloading if already populated
-  if (APP.investors.length > 0 && tbody.children.length > 0) return;
+  if (APP.investors.length > 0 && ((tbody && tbody.children.length > 0) || (cards && cards.children.length > 0))) return;
 
-  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading investors...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading investors...</td></tr>';
+  if (cards) cards.innerHTML = '<div class="loading">Loading investors...</div>';
 
   const data = await fetchAPI('/api/investors?top=200');
   APP.investors = data || [];
 
   renderInvestorTable();
+  renderInvestorCards();
   wireInvestorControls();
 }
 
-// Render the investor table
+// Render the investor table (desktop)
 function renderInvestorTable() {
   const tbody = document.getElementById('investor-tbody');
   if (!tbody) return;
 
-  let filtered = APP.investors;
-
-  // Filter by search
-  if (investorSearchText) {
-    const q = investorSearchText.toLowerCase();
-    filtered = filtered.filter(inv => {
-      const name = (inv.name || '').toLowerCase();
-      const hood = (inv.top_neighborhood || '').toLowerCase();
-      return name.includes(q) || hood.includes(q) ||
-        (inv.aliases || []).some(a => String(a).toLowerCase().includes(q));
-    });
-  }
-
-  // Sort
-  filtered.sort((a, b) => {
-    let va = a[investorSortField];
-    let vb = b[investorSortField];
-    if (typeof va === 'string') va = va.toLowerCase();
-    if (typeof vb === 'string') vb = vb.toLowerCase();
-    if (va == null) va = investorSortDir === 'desc' ? -Infinity : Infinity;
-    if (vb == null) vb = investorSortDir === 'desc' ? -Infinity : Infinity;
-    if (va < vb) return investorSortDir === 'asc' ? -1 : 1;
-    if (va > vb) return investorSortDir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  let filtered = getFilteredInvestors();
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-row">No investors found.</td></tr>';
@@ -84,28 +63,102 @@ function renderInvestorTable() {
   tbody.innerHTML = html;
 }
 
+// Render investor cards (mobile)
+function renderInvestorCards() {
+  const cards = document.getElementById('investor-cards');
+  if (!cards) return;
+
+  let filtered = getFilteredInvestors();
+
+  if (filtered.length === 0) {
+    cards.innerHTML = '<div class="empty-state">No investors found.</div>';
+    return;
+  }
+
+  let html = '';
+  filtered.forEach((inv, idx) => {
+    const name = inv.name || 'Unknown';
+    const safeName = escapeHtml(name);
+    const accel = inv.is_accelerating
+      ? '<span class="badge-accelerating">Accelerating</span>'
+      : '<span class="badge-steady">Steady</span>';
+
+    html += '<div class="data-card">' +
+      '<div class="data-card-header">' +
+        '<div class="data-card-title">' + safeName + '</div>' +
+        '<span class="data-card-rank">#' + (idx + 1) + '</span>' +
+      '</div>' +
+      '<div class="data-card-grid">' +
+        '<div class="data-card-stat"><span class="data-card-label">Purchases</span><span class="data-card-value">' + (inv.total_purchases || 0).toLocaleString() + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Total Spend</span><span class="data-card-value">' + formatMoney(inv.total_spend) + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Top Area</span><span class="data-card-value">' + escapeHtml(inv.top_neighborhood || 'N/A') + '</span></div>' +
+        '<div class="data-card-stat"><span class="data-card-label">Status</span><span class="data-card-value">' + accel + '</span></div>' +
+      '</div>' +
+      '<div class="data-card-actions">' +
+        '<button class="btn-view" onclick="showInvestorDetail(\'' + safeName.replace(/'/g, "\\'") + '\')">View Details</button>' +
+        '<button class="btn-view" onclick="showInvestorOnMap(\'' + safeName.replace(/'/g, "\\'") + '\')">Show on Map</button>' +
+      '</div>' +
+    '</div>';
+  });
+  cards.innerHTML = html;
+}
+
+// Get filtered and sorted investors
+function getFilteredInvestors() {
+  let filtered = APP.investors;
+
+  if (investorSearchText) {
+    const q = investorSearchText.toLowerCase();
+    filtered = filtered.filter(inv => {
+      const name = (inv.name || '').toLowerCase();
+      const hood = (inv.top_neighborhood || '').toLowerCase();
+      return name.includes(q) || hood.includes(q) ||
+        (inv.aliases || []).some(a => String(a).toLowerCase().includes(q));
+    });
+  }
+
+  filtered.sort((a, b) => {
+    let va = a[investorSortField];
+    let vb = b[investorSortField];
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va == null) va = investorSortDir === 'desc' ? -Infinity : Infinity;
+    if (vb == null) vb = investorSortDir === 'desc' ? -Infinity : Infinity;
+    if (va < vb) return investorSortDir === 'asc' ? -1 : 1;
+    if (va > vb) return investorSortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return filtered;
+}
+
 // Wire up search and sort controls
 function wireInvestorControls() {
   const searchInput = document.getElementById('investor-search');
-  if (searchInput) {
+  if (searchInput && !searchInput._wired) {
+    searchInput._wired = true;
     searchInput.addEventListener('input', (e) => {
       investorSearchText = e.target.value;
       renderInvestorTable();
+      renderInvestorCards();
     });
   }
 
   const sortSelect = document.getElementById('investor-sort');
-  if (sortSelect) {
+  if (sortSelect && !sortSelect._wired) {
+    sortSelect._wired = true;
     sortSelect.addEventListener('change', (e) => {
       investorSortField = e.target.value;
       renderInvestorTable();
+      renderInvestorCards();
     });
   }
 
   // Sort by clicking table headers
   document.querySelectorAll('#investor-table th').forEach((th, idx) => {
     const fields = ['', 'name', 'total_purchases', 'total_spend', 'top_neighborhood', 'last_purchase', 'is_accelerating', ''];
-    if (fields[idx]) {
+    if (fields[idx] && !th._wired) {
+      th._wired = true;
       th.style.cursor = 'pointer';
       th.addEventListener('click', () => {
         if (investorSortField === fields[idx]) {
@@ -115,6 +168,7 @@ function wireInvestorControls() {
           investorSortDir = 'desc';
         }
         renderInvestorTable();
+        renderInvestorCards();
       });
     }
   });
@@ -125,11 +179,13 @@ async function showInvestorDetail(investorName) {
   const detail = document.getElementById('investor-detail');
   const tableWrap = document.getElementById('investor-table-wrap');
   const searchBar = document.getElementById('investor-search-bar');
+  const cardsWrap = document.getElementById('investor-cards');
   if (!detail) return;
 
   detail.classList.remove('hidden');
   if (tableWrap) tableWrap.classList.add('hidden');
   if (searchBar) searchBar.classList.add('hidden');
+  if (cardsWrap) cardsWrap.classList.add('hidden');
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
@@ -180,11 +236,11 @@ async function showInvestorDetail(investorName) {
   }
 
   // Timeline chart
-  html += '<div style="height:300px;margin:20px 0"><canvas id="investor-timeline-chart"></canvas></div>';
+  html += '<div style="height:250px;margin:20px 0"><canvas id="investor-timeline-chart"></canvas></div>';
 
   // Transaction list
   if (timeline.length > 0) {
-    html += '<h3>Transactions (' + timeline.length + ')</h3>';
+    html += '<h3 style="font-size:14px;font-weight:700;margin-bottom:8px">Transactions (' + timeline.length + ')</h3>';
     html += '<div class="table-scroll"><table class="inner-table"><thead><tr><th>#</th><th>Address</th><th>Price</th><th>Date</th></tr></thead><tbody>';
     timeline.forEach((tx, i) => {
       html += '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(tx.address || 'N/A') + '</td><td>' + formatMoney(tx.price) + '</td><td>' + formatDate(tx.date) + '</td></tr>';
@@ -205,9 +261,11 @@ function closeInvestorDetail() {
   const detail = document.getElementById('investor-detail');
   const tableWrap = document.getElementById('investor-table-wrap');
   const searchBar = document.getElementById('investor-search-bar');
+  const cardsWrap = document.getElementById('investor-cards');
   if (detail) detail.classList.add('hidden');
   if (tableWrap) tableWrap.classList.remove('hidden');
   if (searchBar) searchBar.classList.remove('hidden');
+  if (cardsWrap) cardsWrap.classList.remove('hidden');
 }
 
 // Show investor properties on map
