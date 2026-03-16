@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detroit Data Intel</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <!-- Leaflet Heat JS -->
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Top bar with logo/title and tab navigation -->
+  <header id="topbar">
+    <h1>Detroit Data Intel</h1>
+    <nav>
+      <button class="tab-btn active" data-tab="map">Map</button>
+      <button class="tab-btn" data-tab="investors">Investors</button>
+      <button class="tab-btn" data-tab="neighborhoods">Neighborhoods</button>
+      <button class="tab-btn" data-tab="contractors">Contractors</button>
+      <button class="tab-btn" data-tab="pipeline">Deal Pipeline</button>
+    </nav>
+    <div id="stats-bar">
+      <!-- populated by JS: total sales, permits, investors -->
+    </div>
+  </header>
+
+  <!-- Main content area -->
+  <div id="app">
+    <!-- MAP TAB -->
+    <div id="tab-map" class="tab-content active">
+      <!-- Sidebar for filters -->
+      <aside id="sidebar">
+        <h3>Layers</h3>
+        <div id="layer-toggles">
+          <label><input type="checkbox" data-layer="sales" checked> Property Sales</label>
+          <label><input type="checkbox" data-layer="permits"> Building Permits</label>
+          <label><input type="checkbox" data-layer="dlba"> DLBA Properties</label>
+          <label><input type="checkbox" data-layer="blight"> Blight Tickets</label>
+          <label><input type="checkbox" data-layer="demos"> Demolitions</label>
+          <label><input type="checkbox" data-layer="rentals"> Rentals</label>
+          <label><input type="checkbox" data-layer="crime"> Crime/911</label>
+          <label><input type="checkbox" data-layer="vacant"> Vacant Properties</label>
+          <label><input type="checkbox" data-layer="presale"> Presale Inspections</label>
+          <label><input type="checkbox" data-layer="trades"> Trades Permits</label>
+          <label><input type="checkbox" data-layer="investors"> Top Investor Purchases</label>
+        </div>
+        <label><input type="checkbox" id="heatmap-toggle"> Heatmap Mode</label>
+
+        <h3>Filters</h3>
+        <div id="filters">
+          <div class="filter-group">
+            <label>Date Range</label>
+            <input type="date" id="filter-start-date">
+            <input type="date" id="filter-end-date">
+          </div>
+          <div class="filter-group">
+            <label>Price Range</label>
+            <input type="number" id="filter-min-price" placeholder="Min $">
+            <input type="number" id="filter-max-price" placeholder="Max $">
+          </div>
+          <div class="filter-group">
+            <label>Investor/Grantee</label>
+            <input type="text" id="filter-grantee" placeholder="Search name..." list="grantee-list">
+            <datalist id="grantee-list"></datalist>
+          </div>
+          <div class="filter-group">
+            <label>Deed Type</label>
+            <select id="filter-deed-type">
+              <option value="">All</option>
+              <option value="WARRANTY">Warranty</option>
+              <option value="QUIT CLAIM">Quit Claim</option>
+              <option value="COVENANT">Covenant</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Neighborhood</label>
+            <select id="filter-neighborhood">
+              <option value="">All</option>
+            </select>
+          </div>
+          <button id="apply-filters" class="btn">Apply Filters</button>
+          <button id="clear-filters" class="btn btn-secondary">Clear</button>
+        </div>
+      </aside>
+
+      <!-- Map container -->
+      <div id="map"></div>
+    </div>
+
+    <!-- INVESTORS TAB -->
+    <div id="tab-investors" class="tab-content">
+      <div id="investor-panel">
+        <div id="investor-search-bar">
+          <input type="text" id="investor-search" placeholder="Search investors...">
+          <select id="investor-sort">
+            <option value="rank_score">Rank Score</option>
+            <option value="total_purchases">Total Purchases</option>
+            <option value="total_spend">Total Spend</option>
+          </select>
+        </div>
+        <div id="investor-table-wrap">
+          <table id="investor-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Purchases</th>
+                <th>Total Spend</th>
+                <th>Top Neighborhood</th>
+                <th>Last Active</th>
+                <th>Accelerating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="investor-tbody"></tbody>
+          </table>
+        </div>
+        <!-- Investor detail panel -->
+        <div id="investor-detail" class="hidden">
+          <button id="close-investor-detail" class="btn btn-secondary">Back to List</button>
+          <h2 id="investor-detail-name"></h2>
+          <div id="investor-detail-stats"></div>
+          <div id="investor-detail-aliases"></div>
+          <div id="investor-detail-neighborhoods"></div>
+          <canvas id="investor-timeline-chart"></canvas>
+          <div id="investor-detail-timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEIGHBORHOODS TAB -->
+    <div id="tab-neighborhoods" class="tab-content">
+      <div id="neighborhood-panel">
+        <div id="neighborhood-controls">
+          <input type="text" id="neighborhood-search" placeholder="Search neighborhoods...">
+        </div>
+        <div id="neighborhood-grid"></div>
+        <div id="neighborhood-charts">
+          <canvas id="neighborhood-momentum-chart"></canvas>
+          <canvas id="neighborhood-comparison-chart"></canvas>
+        </div>
+        <div id="opportunities-section">
+          <h3>Investment Opportunities</h3>
+          <div id="opportunities-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRACTORS TAB -->
+    <div id="tab-contractors" class="tab-content">
+      <div id="contractor-panel">
+        <div class="panel-header">
+          <h2>Contractor Intelligence</h2>
+          <div class="panel-controls">
+            <input type="text" id="contractor-search" placeholder="Search contractors...">
+            <select id="contractor-specialty-filter">
+              <option value="">All Specialties</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Plumbing">Plumbing</option>
+              <option value="Mechanical">Mechanical / HVAC</option>
+            </select>
+          </div>
+        </div>
+        <div id="contractor-stats-bar"></div>
+        <div id="contractor-table-wrap">
+          <table id="contractor-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Business Name</th>
+                <th>Contact</th>
+                <th>Total Permits</th>
+                <th>Properties</th>
+                <th>Neighborhoods</th>
+                <th>Top Specialty</th>
+                <th>Top Neighborhood</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contractor-tbody"></tbody>
+          </table>
+        </div>
+        <div id="contractor-detail" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- DEAL PIPELINE TAB -->
+    <div id="tab-pipeline" class="tab-content">
+      <div id="pipeline-panel">
+        <div class="panel-header">
+          <h2>Deal Pipeline</h2>
+          <p class="panel-subtitle">Motivated sellers matched to investor profiles</p>
+          <div class="panel-controls">
+            <label>Min Score: <input type="number" id="pipeline-min-score" value="20" min="0" max="100" style="width:60px"></label>
+            <select id="pipeline-neighborhood-filter">
+              <option value="">All Neighborhoods</option>
+            </select>
+            <button id="pipeline-apply" class="btn">Filter</button>
+            <button id="pipeline-export" class="btn btn-secondary">Export CSV</button>
+          </div>
+        </div>
+        <div id="pipeline-stats-bar"></div>
+        <div id="pipeline-table-wrap">
+          <table id="pipeline-table">
+            <thead>
+              <tr>
+                <th>Score</th>
+                <th>Address</th>
+                <th>Owner</th>
+                <th>Neighborhood</th>
+                <th>Last Sale</th>
+                <th>Signals</th>
+                <th>Investor Matches</th>
+              </tr>
+            </thead>
+            <tbody id="pipeline-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/app.js"></script>
+  <script src="/static/map.js"></script>
+  <script src="/static/charts.js"></script>
+  <script src="/static/players.js"></script>
+  <script src="/static/filters.js"></script>
+  <script src="/static/contractors.js"></script>
+  <script src="/static/pipeline.js"></script>
+</body>
+</html>

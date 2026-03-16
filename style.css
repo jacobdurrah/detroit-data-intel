@@ -1,0 +1,1377 @@
+/* ===================================================================
+   Detroit Data Intel - Dark Theme Stylesheet
+   =================================================================== */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-accent: #0f3460;
+  --highlight: #e94560;
+  --text-primary: #eeeeee;
+  --text-secondary: #aaaaaa;
+  --border-color: #2a2a4a;
+  --input-bg: #0d1b2a;
+  --input-border: #334155;
+  --sidebar-width: 280px;
+  --topbar-height: 50px;
+  --radius: 6px;
+  --transition: 0.2s ease;
+  --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-stack);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+a {
+  color: var(--highlight);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* --- Utility --- */
+.hidden {
+  display: none !important;
+}
+
+/* --- Top Bar / Header --- */
+#topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 24px;
+  z-index: 1000;
+}
+
+#topbar h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+#topbar nav {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-stack);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--bg-accent);
+  color: #ffffff;
+}
+
+#stats-bar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+#stats-bar .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#stats-bar .stat-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* --- Main App Container --- */
+#app {
+  position: fixed;
+  top: var(--topbar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* --- Tab Content --- */
+.tab-content {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+/* --- Sidebar --- */
+#sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  height: 100%;
+  background: rgba(22, 33, 62, 0.95);
+  backdrop-filter: blur(8px);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+#sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+#sidebar h3 {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Layer Toggles (Switch Style) --- */
+#layer-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#layer-toggles label,
+#sidebar > label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: background var(--transition);
+  user-select: none;
+}
+
+#layer-toggles label:hover,
+#sidebar > label:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Custom checkbox switch */
+#layer-toggles input[type="checkbox"],
+#sidebar > label > input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: 20px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+
+#layer-toggles input[type="checkbox"]::after,
+#sidebar > label > input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: transform var(--transition), background var(--transition);
+}
+
+#layer-toggles input[type="checkbox"]:checked,
+#sidebar > label > input[type="checkbox"]:checked {
+  background: var(--bg-accent);
+  border-color: var(--highlight);
+}
+
+#layer-toggles input[type="checkbox"]:checked::after,
+#sidebar > label > input[type="checkbox"]:checked::after {
+  transform: translateX(16px);
+  background: var(--highlight);
+}
+
+/* --- Filters --- */
+#filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-group > label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-group input,
+.filter-group select {
+  width: 100%;
+}
+
+/* --- Form Inputs (Global Dark Style) --- */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-stack);
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.15);
+}
+
+input::placeholder {
+  color: #556;
+}
+
+select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Date input icon fix for dark theme */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-stack);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+#apply-filters {
+  background: var(--highlight);
+  color: #ffffff;
+}
+
+#apply-filters:hover {
+  background: #d13354;
+}
+
+.btn-secondary {
+  background: var(--bg-accent);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: #1a4a7a;
+}
+
+#clear-filters {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+#clear-filters:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+/* --- Map --- */
+#map {
+  flex: 1;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+/* Leaflet dark overrides */
+.leaflet-container {
+  background: var(--bg-primary);
+}
+
+.leaflet-control-zoom a {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--bg-accent) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(22, 33, 62, 0.85) !important;
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--text-secondary) !important;
+}
+
+/* Leaflet Popup - Dark Theme */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.leaflet-popup-content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.leaflet-popup-content .popup-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.leaflet-popup-content .popup-label {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.leaflet-popup-content .popup-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.leaflet-popup-close-button {
+  color: var(--text-secondary) !important;
+  font-size: 18px !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--highlight) !important;
+}
+
+/* MarkerCluster dark overrides */
+.marker-cluster-small {
+  background-color: rgba(15, 52, 96, 0.6);
+}
+.marker-cluster-small div {
+  background-color: rgba(15, 52, 96, 0.9);
+  color: var(--text-primary);
+}
+
+.marker-cluster-medium {
+  background-color: rgba(233, 69, 96, 0.4);
+}
+.marker-cluster-medium div {
+  background-color: rgba(233, 69, 96, 0.7);
+  color: var(--text-primary);
+}
+
+.marker-cluster-large {
+  background-color: rgba(233, 69, 96, 0.6);
+}
+.marker-cluster-large div {
+  background-color: rgba(233, 69, 96, 0.9);
+  color: #ffffff;
+}
+
+.marker-cluster div {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* --- Investors Tab --- */
+#tab-investors {
+  flex-direction: column;
+}
+
+#investor-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+#investor-search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+#investor-search {
+  flex: 1;
+  max-width: 400px;
+}
+
+#investor-sort {
+  width: 180px;
+}
+
+/* --- Table Styling --- */
+#investor-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+#investor-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+#investor-table thead {
+  background: var(--bg-accent);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#investor-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  user-select: none;
+  cursor: pointer;
+}
+
+#investor-table th:hover {
+  color: var(--text-primary);
+}
+
+#investor-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+}
+
+#investor-table tbody tr {
+  transition: background var(--transition);
+}
+
+#investor-table tbody tr:hover {
+  background: rgba(15, 52, 96, 0.3);
+}
+
+#investor-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+#investor-table tbody tr:nth-child(even):hover {
+  background: rgba(15, 52, 96, 0.3);
+}
+
+#investor-table td .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-accelerating {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.badge-steady {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.badge-declining {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.btn-view {
+  background: var(--bg-accent);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.btn-view:hover {
+  background: var(--highlight);
+  color: #ffffff;
+}
+
+/* --- Investor Detail Panel --- */
+#investor-detail {
+  padding-top: 16px;
+}
+
+#investor-detail h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 12px 0 16px 0;
+}
+
+#investor-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+#investor-detail-stats .stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+#investor-detail-stats .stat-card .stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#investor-detail-stats .stat-card .stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+#investor-detail-aliases {
+  margin-bottom: 16px;
+}
+
+#investor-detail-aliases .alias-tag {
+  display: inline-block;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  margin: 2px 4px 2px 0;
+  color: var(--text-secondary);
+}
+
+#investor-detail-neighborhoods {
+  margin-bottom: 20px;
+}
+
+#investor-timeline-chart {
+  width: 100%;
+  max-height: 300px;
+  margin-bottom: 16px;
+}
+
+#investor-detail-timeline {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* --- Neighborhoods Tab --- */
+#tab-neighborhoods {
+  flex-direction: column;
+}
+
+#neighborhood-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+#neighborhood-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+#neighborhood-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 350px;
+}
+
+#neighborhood-compare {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#neighborhood-compare span {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+#neighborhood-compare select {
+  width: 160px;
+}
+
+/* --- Neighborhood Grid --- */
+#neighborhood-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.neighborhood-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.neighborhood-card:hover {
+  border-color: var(--highlight);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.neighborhood-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.neighborhood-card .card-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.neighborhood-card .card-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.card-badge.momentum-high {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.card-badge.momentum-mid {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.card-badge.momentum-low {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.neighborhood-card .card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.neighborhood-card .card-stat {
+  font-size: 12px;
+}
+
+.neighborhood-card .card-stat-label {
+  color: var(--text-secondary);
+}
+
+.neighborhood-card .card-stat-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* --- Charts Section --- */
+#neighborhood-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+#neighborhood-charts canvas {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 16px;
+  width: 100%;
+  max-height: 350px;
+}
+
+/* --- Opportunities Section --- */
+#opportunities-section {
+  margin-bottom: 24px;
+}
+
+#opportunities-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+#opportunities-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.opportunity-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--highlight);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.opportunity-card:hover {
+  border-color: var(--highlight);
+  transform: translateY(-1px);
+}
+
+.opportunity-card .opp-address {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.opportunity-card .opp-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.opportunity-card .opp-score {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--highlight);
+  float: right;
+  margin-top: -28px;
+}
+
+/* --- Scrollbar (Global) --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* --- Loading & Empty States --- */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--highlight);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state h4 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  #topbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  #topbar h1 {
+    font-size: 16px;
+  }
+
+  #stats-bar {
+    display: none;
+  }
+
+  :root {
+    --topbar-height: 80px;
+  }
+
+  #app {
+    top: 80px;
+  }
+
+  /* Sidebar collapses to overlay on small screens */
+  #sidebar {
+    position: absolute;
+    left: -280px;
+    top: 0;
+    height: 100%;
+    transition: left 0.3s ease;
+    z-index: 600;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  #sidebar.open {
+    left: 0;
+  }
+
+  #map {
+    width: 100%;
+  }
+
+  /* Neighborhood charts stack vertically */
+  #neighborhood-charts {
+    grid-template-columns: 1fr;
+  }
+
+  #neighborhood-compare {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #investor-search-bar {
+    flex-direction: column;
+  }
+
+  #investor-search,
+  #investor-sort {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  #neighborhood-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #opportunities-list {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  #investor-table th,
+  #investor-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* --- Contractor Tab --- */
+#tab-contractors {
+  flex-direction: column;
+}
+
+#contractor-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+#contractor-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+#contractor-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+#contractor-table thead {
+  background: var(--bg-accent);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#contractor-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#contractor-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+}
+
+#contractor-table tbody tr {
+  transition: background var(--transition);
+}
+
+#contractor-table tbody tr:hover {
+  background: rgba(15, 52, 96, 0.3);
+}
+
+#contractor-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.contractor-name-cell {
+  font-weight: 600;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Pipeline Tab --- */
+#tab-pipeline {
+  flex-direction: column;
+}
+
+#pipeline-panel {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+#pipeline-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+#pipeline-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#pipeline-table thead {
+  background: var(--bg-accent);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+#pipeline-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+#pipeline-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+  vertical-align: top;
+}
+
+#pipeline-table tbody tr {
+  transition: background var(--transition);
+}
+
+#pipeline-table tbody tr:hover {
+  background: rgba(15, 52, 96, 0.3);
+}
+
+/* Score badges */
+.score-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: center;
+}
+
+.score-high {
+  background: rgba(233, 69, 96, 0.2);
+  color: #e94560;
+}
+
+.score-mid {
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+}
+
+.score-low {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+/* Match badges */
+.match-cell {
+  max-width: 300px;
+}
+
+.match-badge {
+  display: inline-block;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  margin: 2px 3px 2px 0;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.match-badge small {
+  color: var(--text-secondary);
+}
+
+.match-more {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.no-match {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --- Shared Panel Styles --- */
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.panel-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.panel-controls input[type="text"],
+.panel-controls select {
+  min-width: 160px;
+}
+
+/* Stats row (shared for contractor & pipeline) */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stat-pill {
+  display: inline-block;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Detail stats grid */
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-stats-grid .stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.detail-stats-grid .stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-stats-grid .stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Hood breakdown */
+.hood-breakdown {
+  margin-bottom: 16px;
+}
+
+.hood-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(42, 42, 74, 0.3);
+  font-size: 13px;
+}
+
+.hood-name {
+  font-weight: 500;
+}
+
+.hood-count {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Inner table (for detail views) */
+.inner-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inner-table thead {
+  background: var(--bg-accent);
+}
+
+.inner-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.inner-table td {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(42, 42, 74, 0.3);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin: 8px 0;
+}
+
+/* Investor name cell */
+.investor-name-cell {
+  font-weight: 600;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading text */
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-row {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+/* Opportunity type badges */
+.opp-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.opp-type-value { color: #34d399; }
+.opp-type-cluster { color: #60a5fa; }
+.opp-type-emerging { color: #fbbf24; }
+
+/* Badge styles */
+.badge-accelerating {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.badge-steady {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.text-center {
+  text-align: center;
+}

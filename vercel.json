@@ -1,0 +1,27 @@
+{
+  "rewrites": [
+    { "source": "/api/stats", "destination": "/api/stats.json" },
+    { "source": "/api/investors", "destination": "/api/investors.json" },
+    { "source": "/api/investors/:path*", "destination": "/api/investors.json" },
+    { "source": "/api/neighborhoods", "destination": "/api/neighborhoods.json" },
+    { "source": "/api/contractors", "destination": "/api/contractors.json" },
+    { "source": "/api/motivated-sellers", "destination": "/api/motivated-sellers.json" },
+    { "source": "/api/pipeline", "destination": "/api/motivated-sellers.json" },
+    { "source": "/api/opportunities", "destination": "/api/neighborhoods.json" },
+    { "source": "/api/sales", "destination": "/api/sales.json" },
+    { "source": "/api/permits", "destination": "/api/permits.json" },
+    { "source": "/api/trades", "destination": "/api/trades.json" },
+    { "source": "/api/blight", "destination": "/api/blight.json" },
+    { "source": "/api/vacant", "destination": "/api/vacant.json" },
+    { "source": "/api/investor-properties", "destination": "/api/sales.json" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
