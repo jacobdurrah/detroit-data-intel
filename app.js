@@ -76,6 +76,26 @@ async function fetchAPI(endpoint) {
   }
 }
 
+// Normalize neighborhood payloads that may arrive as arrays or keyed maps.
+function normalizeNeighborhoods(data) {
+  if (!data) return [];
+
+  const rows = Array.isArray(data)
+    ? data
+    : (typeof data === 'object' ? Object.keys(data).map(key => {
+        const value = data[key];
+        if (value && typeof value === 'object') {
+          return Object.assign({}, value, { name: value.name || value.neighborhood || key });
+        }
+        return { name: key };
+      }) : []);
+
+  return rows.map(n => {
+    if (typeof n === 'string') return { name: n };
+    return Object.assign({}, n, { name: n.name || n.neighborhood || '' });
+  }).filter(n => n.name);
+}
+
 // Format currency
 function formatMoney(n) {
   if (!n && n !== 0) return 'N/A';
@@ -128,7 +148,7 @@ async function loadNeighborhoods() {
   showLoading(grid);
 
   const data = await fetchAPI('/api/neighborhoods');
-  APP.neighborhoods = data || [];
+  APP.neighborhoods = normalizeNeighborhoods(data);
 
   if (APP.neighborhoods.length === 0) {
     showEmpty(grid, 'No neighborhood data available.');
