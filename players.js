@@ -174,6 +174,22 @@ function wireInvestorControls() {
   });
 }
 
+function investorNameMatches(inv, investorName) {
+  const target = String(investorName || '').toLowerCase();
+  return [
+    inv.name,
+    inv.canonical_name,
+    ...(inv.aliases || [])
+  ].filter(Boolean).some(name => String(name).toLowerCase() === target);
+}
+
+async function resolveLoadedInvestor(investorName) {
+  if (!APP.investors || APP.investors.length === 0) {
+    APP.investors = await fetchAPI('/api/investors?top=2000');
+  }
+  return (APP.investors || []).find(inv => investorNameMatches(inv, investorName));
+}
+
 // Show investor detail panel
 async function showInvestorDetail(investorName) {
   const detail = document.getElementById('investor-detail');
@@ -189,8 +205,8 @@ async function showInvestorDetail(investorName) {
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
-  if (!inv || inv.error) {
+  const inv = await resolveLoadedInvestor(investorName);
+  if (!inv) {
     detail.innerHTML = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>' +
       '<p>Investor not found.</p>';
     return;
@@ -274,15 +290,20 @@ async function showInvestorOnMap(investorName) {
   const mapBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapBtn) mapBtn.click();
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
-  if (!inv || inv.error) return;
+  const inv = await resolveLoadedInvestor(investorName);
+  if (!inv) return;
 
-  // Build property list from timeline with coords from sales
-  const salesData = APP.data['sales'] || await fetchAPI('/api/sales?grantee=' + encodeURIComponent(investorName) + '&limit=500');
+  // Static deployment rewrites query paths to full JSON files, so filter locally.
+  const salesData = APP.data['sales'] || await fetchAPI('/api/sales');
+  APP.data['sales'] = salesData;
+  const aliases = [inv.name, inv.canonical_name, ...(inv.aliases || [])]
+    .filter(Boolean)
+    .map(name => String(name).toLowerCase());
   const properties = salesData.filter(s => {
     const lat = s.latitude || s._lat;
     const lng = s.longitude || s._lng;
-    return lat && lng;
+    const grantee = String(s.grantee || '').toLowerCase();
+    return lat && lng && aliases.some(alias => grantee === alias || grantee.includes(alias));
   });
 
   if (typeof highlightInvestorProperties === 'function') {

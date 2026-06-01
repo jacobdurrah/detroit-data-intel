@@ -158,7 +158,7 @@ function wireContractorControls() {
 }
 
 function showContractorDetail(idx) {
-  const c = APP.contractors[idx];
+  const c = getFilteredContractors()[idx];
   if (!c) return;
 
   const detail = document.getElementById('contractor-detail');
