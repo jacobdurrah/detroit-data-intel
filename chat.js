@@ -85,7 +85,8 @@ function addChatMsg(role, html) {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
-  div.innerHTML = '<div class="chat-bubble">' + html + '</div>';
+  const safeHtml = role === 'user' ? escapeHtmlGlobal(html) : html;
+  div.innerHTML = '<div class="chat-bubble">' + safeHtml + '</div>';
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
@@ -259,9 +260,9 @@ function queryEntityLookup(lower, q) {
       matched.forEach(s => { if(s.neighborhood) hoods[s.neighborhood] = (hoods[s.neighborhood]||0) + 1; });
       const topHood = Object.entries(hoods).sort((a,b) => b[1] - a[1])[0];
       return {
-        html: `<strong>${q}</strong><br>Found <strong>${matched.length}</strong> property purchases<br>
+        html: `<strong>${escapeHtmlGlobal(q)}</strong><br>Found <strong>${matched.length}</strong> property purchases<br>
           Total spend: <strong>${formatDollars(totalSpend)}</strong><br>
-          Top neighborhood: <strong>${topHood ? topHood[0] + ' (' + topHood[1] + ')' : 'N/A'}</strong>`,
+          Top neighborhood: <strong>${topHood ? escapeHtmlGlobal(topHood[0]) + ' (' + topHood[1] + ')' : 'N/A'}</strong>`,
         mapData: matched.slice(0, 200).map(s => ({
           lat: s.latitude, lng: s.longitude, address: s.address,
           price: s.amt_sale_price, buyer: s.grantee, seller: s.grantor,
