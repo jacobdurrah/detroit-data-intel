@@ -174,6 +174,17 @@ function wireInvestorControls() {
   });
 }
 
+function findInvestorByName(investorName, investors) {
+  const target = String(investorName || '').toLowerCase();
+  return (investors || []).find(inv => {
+    const names = [inv.name, inv.canonical_name].concat(inv.aliases || []);
+    return names.some(name => String(name || '').toLowerCase() === target);
+  }) || (investors || []).find(inv => {
+    const names = [inv.name, inv.canonical_name].concat(inv.aliases || []);
+    return names.some(name => String(name || '').toLowerCase().includes(target));
+  });
+}
+
 // Show investor detail panel
 async function showInvestorDetail(investorName) {
   const detail = document.getElementById('investor-detail');
@@ -189,7 +200,13 @@ async function showInvestorDetail(investorName) {
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  let inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  if (Array.isArray(inv)) {
+    inv = findInvestorByName(investorName, inv);
+  }
+  if ((!inv || inv.error) && APP.investors.length > 0) {
+    inv = findInvestorByName(investorName, APP.investors);
+  }
   if (!inv || inv.error) {
     detail.innerHTML = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>' +
       '<p>Investor not found.</p>';
@@ -274,7 +291,13 @@ async function showInvestorOnMap(investorName) {
   const mapBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapBtn) mapBtn.click();
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  let inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  if (Array.isArray(inv)) {
+    inv = findInvestorByName(investorName, inv);
+  }
+  if ((!inv || inv.error) && APP.investors.length > 0) {
+    inv = findInvestorByName(investorName, APP.investors);
+  }
   if (!inv || inv.error) return;
 
   // Build property list from timeline with coords from sales
