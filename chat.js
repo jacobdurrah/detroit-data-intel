@@ -148,7 +148,7 @@ async function processQuery(q) {
     CHAT.data.sales = await fetchAPI('/api/sales');
     CHAT.data.investors = await fetchAPI('/api/investors');
     CHAT.data.contractors = await fetchAPI('/api/contractors');
-    CHAT.data.neighborhoods = await fetchAPI('/api/neighborhoods');
+    CHAT.data.neighborhoods = collectionToArray(await fetchAPI('/api/neighborhoods'));
     CHAT.data.lending = await fetchAPI('/api/lending');
     CHAT.data.sellers = await fetchAPI('/api/motivated-sellers');
   }
@@ -442,7 +442,7 @@ function queryContractors(lower, q) {
 }
 
 function queryCompare(lower, q) {
-  const hoods = CHAT.data.neighborhoods || [];
+  const hoods = collectionToArray(CHAT.data.neighborhoods);
   // Extract two neighborhood names from query
   const parts = lower.split(/\bvs\.?\b|\bversus\b|\bcompare\b|\band\b|\bto\b/).map(s => s.trim()).filter(Boolean);
   
@@ -461,11 +461,11 @@ function queryCompare(lower, q) {
     <table class="chat-table">
     <tr><th>Metric</th><th>${escapeHtml(n1)}</th><th>${escapeHtml(n2)}</th></tr>
     <tr><td>Momentum Score</td><td><strong>${h1.score || h1.momentum_score || 'N/A'}</strong></td><td><strong>${h2.score || h2.momentum_score || 'N/A'}</strong></td></tr>
-    <tr><td>Total Sales</td><td>${h1.total_sales || 'N/A'}</td><td>${h2.total_sales || 'N/A'}</td></tr>
-    <tr><td>Median Price</td><td>${formatDollars(h1.median_price)}</td><td>${formatDollars(h2.median_price)}</td></tr>
-    <tr><td>Permits</td><td>${h1.total_permits || 'N/A'}</td><td>${h2.total_permits || 'N/A'}</td></tr>
-    <tr><td>Blight Tickets</td><td>${h1.total_blight || 'N/A'}</td><td>${h2.total_blight || 'N/A'}</td></tr>
-    <tr><td>Rentals</td><td>${h1.total_rentals || 'N/A'}</td><td>${h2.total_rentals || 'N/A'}</td></tr>
+    <tr><td>Total Sales</td><td>${h1.total_sales || h1.sales_volume_12mo || 'N/A'}</td><td>${h2.total_sales || h2.sales_volume_12mo || 'N/A'}</td></tr>
+    <tr><td>Median Price</td><td>${formatDollars(h1.median_price || h1.median_price_recent)}</td><td>${formatDollars(h2.median_price || h2.median_price_recent)}</td></tr>
+    <tr><td>Permits</td><td>${h1.total_permits || h1.permit_count || 'N/A'}</td><td>${h2.total_permits || h2.permit_count || 'N/A'}</td></tr>
+    <tr><td>Blight Tickets</td><td>${h1.total_blight || h1.blight_recent || 'N/A'}</td><td>${h2.total_blight || h2.blight_recent || 'N/A'}</td></tr>
+    <tr><td>Rentals</td><td>${h1.total_rentals || h1.rental_registrations || 'N/A'}</td><td>${h2.total_rentals || h2.rental_registrations || 'N/A'}</td></tr>
     </table>`;
 
   return {html};
@@ -506,24 +506,24 @@ function queryNewConstruction(lower, q) {
 }
 
 function queryNeighborhoodRanking(lower, q) {
-  const hoods = CHAT.data.neighborhoods || [];
+  const hoods = collectionToArray(CHAT.data.neighborhoods);
   if (!Array.isArray(hoods) || hoods.length === 0) return {html: 'No neighborhood data loaded.'};
 
   let sorted = [...hoods];
   let metric = 'momentum score';
 
   if (matchPattern(lower, ['most sales', 'most sold', 'most active'])) {
-    sorted.sort((a,b) => (b.total_sales || 0) - (a.total_sales || 0));
+    sorted.sort((a,b) => (b.total_sales || b.sales_volume_12mo || 0) - (a.total_sales || a.sales_volume_12mo || 0));
     metric = 'sales volume';
   } else if (matchPattern(lower, ['most expensive', 'highest price', 'priciest'])) {
-    sorted.sort((a,b) => (b.median_price || 0) - (a.median_price || 0));
+    sorted.sort((a,b) => (b.median_price || b.median_price_recent || 0) - (a.median_price || a.median_price_recent || 0));
     metric = 'median price';
   } else if (matchPattern(lower, ['cheapest', 'lowest price', 'affordable'])) {
-    sorted = sorted.filter(h => (h.median_price || 0) > 0);
-    sorted.sort((a,b) => (a.median_price || 0) - (b.median_price || 0));
+    sorted = sorted.filter(h => (h.median_price || h.median_price_recent || 0) > 0);
+    sorted.sort((a,b) => (a.median_price || a.median_price_recent || 0) - (b.median_price || b.median_price_recent || 0));
     metric = 'lowest median price';
   } else if (matchPattern(lower, ['most permits', 'most construction', 'most development'])) {
-    sorted.sort((a,b) => (b.total_permits || 0) - (a.total_permits || 0));
+    sorted.sort((a,b) => (b.total_permits || b.permit_count || 0) - (a.total_permits || a.permit_count || 0));
     metric = 'permit activity';
   } else if (matchPattern(lower, ['most blight', 'worst blight'])) {
     sorted.sort((a,b) => (b.total_blight || 0) - (a.total_blight || 0));
@@ -540,9 +540,9 @@ function queryNeighborhoodRanking(lower, q) {
       '<tr><td>' + (i+1) + '</td>' +
       '<td>' + escapeHtml(h.name || h.neighborhood || '?') + '</td>' +
       '<td>' + (h.score || h.momentum_score || 'N/A') + '</td>' +
-      '<td>' + (h.total_sales || 'N/A') + '</td>' +
-      '<td>' + formatDollars(h.median_price) + '</td>' +
-      '<td>' + (h.total_permits || 'N/A') + '</td></tr>'
+      '<td>' + (h.total_sales || h.sales_volume_12mo || 'N/A') + '</td>' +
+      '<td>' + formatDollars(h.median_price || h.median_price_recent) + '</td>' +
+      '<td>' + (h.total_permits || h.permit_count || 'N/A') + '</td></tr>'
     ).join('')}
     </table>`;
 

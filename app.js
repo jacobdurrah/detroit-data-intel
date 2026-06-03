@@ -20,6 +20,20 @@ function isMobile() {
   return window.innerWidth < 768;
 }
 
+function collectionToArray(data) {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== 'object') return [];
+  return Object.entries(data).map(([key, value]) => {
+    if (value && typeof value === 'object') {
+      const item = Object.assign({}, value);
+      if (!item.name) item.name = item.neighborhood || key;
+      if (!item.neighborhood) item.neighborhood = item.name || key;
+      return item;
+    }
+    return { name: key, neighborhood: key, value };
+  });
+}
+
 // Tab switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -128,7 +142,7 @@ async function loadNeighborhoods() {
   showLoading(grid);
 
   const data = await fetchAPI('/api/neighborhoods');
-  APP.neighborhoods = data || [];
+  APP.neighborhoods = collectionToArray(data);
 
   if (APP.neighborhoods.length === 0) {
     showEmpty(grid, 'No neighborhood data available.');
@@ -205,7 +219,7 @@ async function loadOpportunities() {
   if (!list) return;
 
   const data = await fetchAPI('/api/opportunities');
-  APP.opportunities = data || [];
+  APP.opportunities = collectionToArray(data);
 
   if (APP.opportunities.length === 0) {
     list.innerHTML = '<div class="empty-state">No opportunities detected yet.</div>';
