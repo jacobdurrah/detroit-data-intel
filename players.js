@@ -284,7 +284,11 @@ async function showInvestorDetail(investorName) {
 
   // Create timeline chart
   if (timeline.length > 0 && typeof createInvestorTimelineChart === 'function') {
-    createInvestorTimelineChart(timeline);
+    try {
+      createInvestorTimelineChart(timeline);
+    } catch (e) {
+      console.warn('Investor timeline chart failed:', e.message);
+    }
   }
 }
 
