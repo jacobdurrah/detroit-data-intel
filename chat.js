@@ -148,7 +148,9 @@ async function processQuery(q) {
     CHAT.data.sales = await fetchAPI('/api/sales');
     CHAT.data.investors = await fetchAPI('/api/investors');
     CHAT.data.contractors = await fetchAPI('/api/contractors');
-    CHAT.data.neighborhoods = await fetchAPI('/api/neighborhoods');
+    CHAT.data.neighborhoods = typeof normalizeNeighborhoods === 'function'
+      ? normalizeNeighborhoods(await fetchAPI('/api/neighborhoods'))
+      : await fetchAPI('/api/neighborhoods');
     CHAT.data.lending = await fetchAPI('/api/lending');
     CHAT.data.sellers = await fetchAPI('/api/motivated-sellers');
   }

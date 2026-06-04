@@ -132,6 +132,38 @@ function getFilteredInvestors() {
   return filtered;
 }
 
+function normalizeInvestorLookupName(name) {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = String(name || '');
+  return textarea.value.trim().toLowerCase();
+}
+
+function findInvestorByName(investorName, data) {
+  const investors = Array.isArray(data) ? data : APP.investors;
+  const query = normalizeInvestorLookupName(investorName);
+  return investors.find(inv => {
+    const names = [
+      inv.name,
+      inv.canonical_name,
+      ...(inv.aliases || [])
+    ].map(normalizeInvestorLookupName).filter(Boolean);
+    return names.some(name => name === query);
+  });
+}
+
+async function fetchInvestorByName(investorName) {
+  let data = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  let inv = Array.isArray(data) ? findInvestorByName(investorName, data) : data;
+  if (!inv && APP.investors.length > 0) {
+    inv = findInvestorByName(investorName, APP.investors);
+  }
+  if (!inv) {
+    data = await fetchAPI('/api/investors');
+    inv = findInvestorByName(investorName, data);
+  }
+  return inv;
+}
+
 // Wire up search and sort controls
 function wireInvestorControls() {
   const searchInput = document.getElementById('investor-search');
@@ -189,7 +221,7 @@ async function showInvestorDetail(investorName) {
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const inv = await fetchInvestorByName(investorName);
   if (!inv || inv.error) {
     detail.innerHTML = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>' +
       '<p>Investor not found.</p>';

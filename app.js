@@ -76,6 +76,26 @@ async function fetchAPI(endpoint) {
   }
 }
 
+function normalizeNeighborhoods(data) {
+  const raw = data && data.data ? data.data : data;
+  if (Array.isArray(raw)) {
+    return raw.map(n => ({
+      ...n,
+      name: n.name || n.neighborhood || ''
+    }));
+  }
+  if (raw && typeof raw === 'object') {
+    return Object.keys(raw).map(name => {
+      const n = raw[name] || {};
+      return {
+        ...n,
+        name: n.name || n.neighborhood || name
+      };
+    });
+  }
+  return [];
+}
+
 // Format currency
 function formatMoney(n) {
   if (!n && n !== 0) return 'N/A';
@@ -128,7 +148,7 @@ async function loadNeighborhoods() {
   showLoading(grid);
 
   const data = await fetchAPI('/api/neighborhoods');
-  APP.neighborhoods = data || [];
+  APP.neighborhoods = normalizeNeighborhoods(data);
 
   if (APP.neighborhoods.length === 0) {
     showEmpty(grid, 'No neighborhood data available.');
@@ -205,7 +225,7 @@ async function loadOpportunities() {
   if (!list) return;
 
   const data = await fetchAPI('/api/opportunities');
-  APP.opportunities = data || [];
+  APP.opportunities = Array.isArray(data) ? data : [];
 
   if (APP.opportunities.length === 0) {
     list.innerHTML = '<div class="empty-state">No opportunities detected yet.</div>';
