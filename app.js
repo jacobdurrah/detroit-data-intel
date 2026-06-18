@@ -65,6 +65,9 @@ async function fetchAPI(endpoint) {
       return [];
     }
     const json = await resp.json();
+    if (endpoint.includes('/api/neighborhoods') && json && json.data) {
+      return normalizeNeighborhoodRecords(json.data);
+    }
     // Unwrap {data: [...]} wrapper from static JSON files
     if (json && json.data && !Array.isArray(json) && typeof json.data === 'object') {
       return json.data;
@@ -74,6 +77,25 @@ async function fetchAPI(endpoint) {
     console.error('API error:', endpoint, e);
     return [];
   }
+}
+
+function normalizeNeighborhoodRecords(data) {
+  if (Array.isArray(data)) {
+    return data.map((n) => {
+      if (typeof n === 'string') return { name: n, neighborhood: n };
+      if (!n || typeof n !== 'object') return { name: '', neighborhood: '' };
+      return { ...n, name: n.name || n.neighborhood || '' };
+    });
+  }
+
+  if (data && typeof data === 'object') {
+    return Object.entries(data).map(([name, value]) => {
+      const record = value && typeof value === 'object' ? value : {};
+      return { ...record, name: record.name || record.neighborhood || name };
+    });
+  }
+
+  return [];
 }
 
 // Format currency
