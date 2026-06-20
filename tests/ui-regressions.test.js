@@ -43,7 +43,8 @@ test('normalizes neighborhood API maps into arrays with display names', () => {
     Midtown: { name: 'Midtown', momentum_score: 33.2 }
   });
 
-  assert.deepEqual(normalized.map((n) => n.name), ['Bagley', 'Midtown']);
+  assert.equal(normalized[0].name, 'Bagley');
+  assert.equal(normalized[1].name, 'Midtown');
   assert.equal(normalized[0].momentum_score, 62.1);
 });
 
