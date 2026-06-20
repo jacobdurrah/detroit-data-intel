@@ -19,12 +19,14 @@ async function populateNeighborhoodDropdown() {
   select.innerHTML = '<option value="">Loading neighborhoods...</option>';
 
   const data = await fetchAPI('/api/neighborhoods');
-  const neighborhoods = data || [];
+  const neighborhoods = typeof normalizeNeighborhoodRecords === 'function'
+    ? normalizeNeighborhoodRecords(data)
+    : (Array.isArray(data) ? data : Object.values(data || {}));
 
   // Build options
   let options = '<option value="">All Neighborhoods</option>';
   neighborhoods.forEach(n => {
-    const name = typeof n === 'string' ? n : (n.name || '');
+    const name = typeof n === 'string' ? n : (n.name || n.neighborhood || '');
     if (name) {
       options += '<option value="' + escapeAttr(name) + '">' + escapeAttr(name) + '</option>';
     }

@@ -76,6 +76,19 @@ async function fetchAPI(endpoint) {
   }
 }
 
+function asArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') return Object.values(data);
+  return [];
+}
+
+function normalizeNeighborhoodRecords(data) {
+  return asArray(data).map(n => ({
+    ...n,
+    name: n.name || n.neighborhood || ''
+  }));
+}
+
 // Format currency
 function formatMoney(n) {
   if (!n && n !== 0) return 'N/A';
@@ -128,7 +141,7 @@ async function loadNeighborhoods() {
   showLoading(grid);
 
   const data = await fetchAPI('/api/neighborhoods');
-  APP.neighborhoods = data || [];
+  APP.neighborhoods = normalizeNeighborhoodRecords(data);
 
   if (APP.neighborhoods.length === 0) {
     showEmpty(grid, 'No neighborhood data available.');
@@ -205,7 +218,7 @@ async function loadOpportunities() {
   if (!list) return;
 
   const data = await fetchAPI('/api/opportunities');
-  APP.opportunities = data || [];
+  APP.opportunities = asArray(data);
 
   if (APP.opportunities.length === 0) {
     list.innerHTML = '<div class="empty-state">No opportunities detected yet.</div>';
