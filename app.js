@@ -76,6 +76,28 @@ async function fetchAPI(endpoint) {
   }
 }
 
+function normalizeObjectMap(data, labelField) {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== 'object') return [];
+  return Object.entries(data).map(([key, value]) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const normalized = Object.assign({}, value);
+      if (labelField && !normalized[labelField]) normalized[labelField] = key;
+      return normalized;
+    }
+    return value;
+  });
+}
+
+function normalizeNeighborhoodRecords(data) {
+  return normalizeObjectMap(data, 'neighborhood').map(n => {
+    if (n && typeof n === 'object' && !n.name) {
+      return Object.assign({}, n, { name: n.neighborhood || 'Unknown' });
+    }
+    return n;
+  });
+}
+
 // Format currency
 function formatMoney(n) {
   if (!n && n !== 0) return 'N/A';
@@ -128,7 +150,7 @@ async function loadNeighborhoods() {
   showLoading(grid);
 
   const data = await fetchAPI('/api/neighborhoods');
-  APP.neighborhoods = data || [];
+  APP.neighborhoods = normalizeNeighborhoodRecords(data);
 
   if (APP.neighborhoods.length === 0) {
     showEmpty(grid, 'No neighborhood data available.');
@@ -205,7 +227,7 @@ async function loadOpportunities() {
   if (!list) return;
 
   const data = await fetchAPI('/api/opportunities');
-  APP.opportunities = data || [];
+  APP.opportunities = normalizeNeighborhoodRecords(data);
 
   if (APP.opportunities.length === 0) {
     list.innerHTML = '<div class="empty-state">No opportunities detected yet.</div>';
@@ -214,14 +236,20 @@ async function loadOpportunities() {
 
   let html = '';
   APP.opportunities.slice(0, 30).forEach(opp => {
-    const typeLabel = (opp.type || '').replace(/_/g, ' ').toUpperCase();
+    const typeLabel = (opp.type || 'high_momentum').replace(/_/g, ' ').toUpperCase();
     const typeClass = opp.type === 'high_momentum_low_price' ? 'opp-type-value' :
                       opp.type === 'investor_cluster' ? 'opp-type-cluster' : 'opp-type-emerging';
+    const score = opp.score != null ? opp.score : (opp.momentum_score || 0);
+    const detail = opp.reasoning || (
+      'Momentum score ' + score.toFixed(1) +
+      ' with ' + (opp.permit_count || 0) + ' permits and ' +
+      (opp.sales_volume_12mo || 0) + ' sales in the last 12 months.'
+    );
     html += '<div class="opportunity-card">' +
-      '<div class="opp-score">' + (opp.score || 0).toFixed(0) + '</div>' +
+      '<div class="opp-score">' + score.toFixed(0) + '</div>' +
       '<div class="opp-type ' + typeClass + '">' + typeLabel + '</div>' +
-      '<div class="opp-address">' + escapeHtmlGlobal(opp.neighborhood || 'Unknown') + '</div>' +
-      '<div class="opp-detail">' + escapeHtmlGlobal((opp.reasoning || '').substring(0, 200)) + '</div>' +
+      '<div class="opp-address">' + escapeHtmlGlobal(opp.neighborhood || opp.name || 'Unknown') + '</div>' +
+      '<div class="opp-detail">' + escapeHtmlGlobal(detail.substring(0, 200)) + '</div>' +
     '</div>';
   });
   list.innerHTML = html;
