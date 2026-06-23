@@ -19,7 +19,9 @@ async function populateNeighborhoodDropdown() {
   select.innerHTML = '<option value="">Loading neighborhoods...</option>';
 
   const data = await fetchAPI('/api/neighborhoods');
-  const neighborhoods = data || [];
+  const neighborhoods = typeof normalizeNeighborhoodRecords === 'function'
+    ? normalizeNeighborhoodRecords(data)
+    : (Array.isArray(data) ? data : []);
 
   // Build options
   let options = '<option value="">All Neighborhoods</option>';

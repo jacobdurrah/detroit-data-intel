@@ -174,6 +174,23 @@ function wireInvestorControls() {
   });
 }
 
+function investorDisplayName(inv) {
+  return inv.name || inv.canonical_name || (inv.aliases && inv.aliases[0]) || '';
+}
+
+function normalizeInvestorName(name) {
+  return String(name || '').trim().toLowerCase();
+}
+
+function findInvestorByName(data, investorName) {
+  const investors = Array.isArray(data) ? data : APP.investors;
+  const target = normalizeInvestorName(investorName);
+  return (investors || []).find(inv => {
+    const names = [inv.name, inv.canonical_name].concat(inv.aliases || []);
+    return names.some(name => normalizeInvestorName(name) === target);
+  }) || null;
+}
+
 // Show investor detail panel
 async function showInvestorDetail(investorName) {
   const detail = document.getElementById('investor-detail');
@@ -189,7 +206,8 @@ async function showInvestorDetail(investorName) {
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const invData = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const inv = Array.isArray(invData) ? findInvestorByName(invData, investorName) : invData;
   if (!inv || inv.error) {
     detail.innerHTML = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>' +
       '<p>Investor not found.</p>';
@@ -274,15 +292,20 @@ async function showInvestorOnMap(investorName) {
   const mapBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapBtn) mapBtn.click();
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const invData = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const inv = Array.isArray(invData) ? findInvestorByName(invData, investorName) : invData;
   if (!inv || inv.error) return;
 
   // Build property list from timeline with coords from sales
   const salesData = APP.data['sales'] || await fetchAPI('/api/sales?grantee=' + encodeURIComponent(investorName) + '&limit=500');
+  const investorNames = [investorName, investorDisplayName(inv), inv.canonical_name].concat(inv.aliases || [])
+    .map(normalizeInvestorName)
+    .filter(Boolean);
   const properties = salesData.filter(s => {
     const lat = s.latitude || s._lat;
     const lng = s.longitude || s._lng;
-    return lat && lng;
+    const grantee = normalizeInvestorName(s.grantee || s.buyer || s.ge);
+    return lat && lng && investorNames.includes(grantee);
   });
 
   if (typeof highlightInvestorProperties === 'function') {
