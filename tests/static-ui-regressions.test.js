@@ -50,10 +50,10 @@ test('normalizes static neighborhood object maps into array records', () => {
   const context = makeContext({});
   runScript(context, 'app.js');
 
-  const result = vm.runInContext(
+  const result = JSON.parse(JSON.stringify(vm.runInContext(
     'normalizeNeighborhoodRecords({"Bagley":{"momentum_score":62.1,"permit_count":17}})',
     context
-  );
+  )));
 
   assert.deepEqual(result, [
     {
