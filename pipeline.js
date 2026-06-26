@@ -4,6 +4,19 @@
 
 let pipelineLoaded = false;
 
+function getPipelineScore(deal) {
+  const rawScore = deal && deal.motivation_score != null ? deal.motivation_score : deal && deal.score;
+  const score = Number(rawScore);
+  return Number.isFinite(score) ? score : 0;
+}
+
+function getPipelineScoreClass(deal) {
+  const score = getPipelineScore(deal);
+  if (score >= 50) return 'score-high';
+  if (score >= 30) return 'score-mid';
+  return 'score-low';
+}
+
 async function loadPipeline() {
   const tbody = document.getElementById('pipeline-tbody');
   const cards = document.getElementById('pipeline-cards');
@@ -37,9 +50,9 @@ function renderPipelineStats() {
   if (!bar) return;
 
   const total = APP.pipeline.length;
-  const avgScore = total > 0 ? (APP.pipeline.reduce((s, d) => s + (d.motivation_score || d.score || 0), 0) / total).toFixed(1) : 0;
+  const avgScore = total > 0 ? (APP.pipeline.reduce((s, d) => s + getPipelineScore(d), 0) / total).toFixed(1) : 0;
   const withMatches = APP.pipeline.filter(d => d.match_count > 0).length;
-  const highScore = APP.pipeline.filter(d => d.motivation_score || d.score >= 50).length;
+  const highScore = APP.pipeline.filter(d => getPipelineScore(d) >= 50).length;
 
   bar.innerHTML =
     '<div class="stats-row">' +
@@ -61,8 +74,8 @@ function renderPipelineTable() {
 
   let html = '';
   APP.pipeline.forEach(deal => {
-    const scoreClass = deal.motivation_score || deal.score >= 50 ? 'score-high' :
-                       deal.motivation_score || deal.score >= 30 ? 'score-mid' : 'score-low';
+    const score = getPipelineScore(deal);
+    const scoreClass = getPipelineScoreClass(deal);
 
     let matchHtml = '';
     if (deal.top_matches && deal.top_matches.length > 0) {
@@ -79,7 +92,7 @@ function renderPipelineTable() {
     }
 
     html += '<tr>' +
-      '<td><span class="score-badge ' + scoreClass + '">' + deal.motivation_score || deal.score + '</span></td>' +
+      '<td><span class="score-badge ' + scoreClass + '">' + score + '</span></td>' +
       '<td>' + escapeHtmlGlobal(deal.address || 'N/A') + '</td>' +
       '<td>' + escapeHtmlGlobal(deal.owner || 'N/A') + '</td>' +
       '<td>' + escapeHtmlGlobal(deal.neighborhood || 'N/A') + '</td>' +
@@ -102,8 +115,8 @@ function renderPipelineCards() {
 
   let html = '';
   APP.pipeline.forEach(deal => {
-    const scoreClass = deal.motivation_score || deal.score >= 50 ? 'score-high' :
-                       deal.motivation_score || deal.score >= 30 ? 'score-mid' : 'score-low';
+    const score = getPipelineScore(deal);
+    const scoreClass = getPipelineScoreClass(deal);
 
     // Build match badges
     let matchHtml = '';
@@ -123,7 +136,7 @@ function renderPipelineCards() {
     html += '<div class="data-card">' +
       '<div class="data-card-header">' +
         '<div class="data-card-title">' + escapeHtmlGlobal(deal.address || 'N/A') + '</div>' +
-        '<span class="score-badge ' + scoreClass + '">' + deal.motivation_score || deal.score + '</span>' +
+        '<span class="score-badge ' + scoreClass + '">' + score + '</span>' +
       '</div>' +
       '<div class="data-card-grid">' +
         '<div class="data-card-stat"><span class="data-card-label">Owner</span><span class="data-card-value">' + escapeHtmlGlobal(deal.owner || 'N/A') + '</span></div>' +
@@ -176,4 +189,14 @@ function wirePipelineControls() {
       link.click();
     });
   }
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    getPipelineScore,
+    getPipelineScoreClass,
+    renderPipelineStats,
+    renderPipelineTable,
+    renderPipelineCards,
+  };
 }
