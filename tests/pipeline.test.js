@@ -24,7 +24,16 @@ function loadPipelineContext() {
           match_count: 0,
           top_matches: [],
         },
-        { motivation_score: 55, match_count: 1, top_matches: [] },
+        {
+          motivation_score: 55,
+          address: '456 Second St',
+          owner: 'Second Owner LLC',
+          neighborhood: 'Bagley',
+          sale_price: 90000,
+          sale_date: '2024-02-03',
+          match_count: 1,
+          top_matches: [],
+        },
       ],
     },
     document: {
