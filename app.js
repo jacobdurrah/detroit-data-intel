@@ -57,6 +57,37 @@ function initAccordions() {
 }
 
 // Fetch helper with loading state management
+function normalizeNeighborhoodRecord(record) {
+  if (!record || typeof record !== 'object') return record;
+  const normalized = { ...record, name: record.name || record.neighborhood || '' };
+  if (normalized.score == null) normalized.score = normalized.momentum_score;
+  if (normalized.total_sales == null) normalized.total_sales = normalized.sales_volume_12mo;
+  if (normalized.median_price == null) normalized.median_price = normalized.median_price_recent;
+  if (normalized.avg_price == null) normalized.avg_price = normalized.median_price_recent;
+  if (normalized.total_permits == null) normalized.total_permits = normalized.permit_count;
+  return normalized;
+}
+
+function normalizeNeighborhoodsPayload(data) {
+  if (Array.isArray(data)) {
+    return data.map((n) => {
+      if (!n || typeof n !== 'object') return n;
+      return normalizeNeighborhoodRecord(n);
+    });
+  }
+
+  if (data && typeof data === 'object') {
+    return Object.entries(data).map(([key, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return { name: key, value };
+      }
+      return normalizeNeighborhoodRecord({ ...value, name: value.name || value.neighborhood || key });
+    });
+  }
+
+  return [];
+}
+
 async function fetchAPI(endpoint) {
   try {
     const resp = await fetch(endpoint);
@@ -65,6 +96,9 @@ async function fetchAPI(endpoint) {
       return [];
     }
     const json = await resp.json();
+    if (endpoint.split('?')[0] === '/api/neighborhoods') {
+      return normalizeNeighborhoodsPayload(json && json.data !== undefined ? json.data : json);
+    }
     // Unwrap {data: [...]} wrapper from static JSON files
     if (json && json.data && !Array.isArray(json) && typeof json.data === 'object') {
       return json.data;

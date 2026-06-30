@@ -7,7 +7,7 @@
     { "source": "/api/contractors", "destination": "/api/contractors.json" },
     { "source": "/api/motivated-sellers", "destination": "/api/motivated-sellers.json" },
     { "source": "/api/pipeline", "destination": "/api/motivated-sellers.json" },
-    { "source": "/api/opportunities", "destination": "/api/neighborhoods.json" },
+    { "source": "/api/lending", "destination": "/api/lending.json" },
     { "source": "/api/sales", "destination": "/api/sales.json" },
     { "source": "/api/permits", "destination": "/api/permits.json" },
     { "source": "/api/trades", "destination": "/api/trades.json" },
