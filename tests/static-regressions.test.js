@@ -51,7 +51,7 @@ test('fetchAPI converts neighborhood map payloads into arrays', async () => {
   const result = await context.fetchAPI('/api/neighborhoods');
 
   assert.equal(Array.isArray(result), true);
-  assert.deepEqual(result.map(n => n.name), ['Bagley', 'Warrendale']);
+  assert.equal(JSON.stringify(result.map(n => n.name)), JSON.stringify(['Bagley', 'Warrendale']));
   assert.equal(result[0].momentum_score, 62.1);
 });
 
@@ -65,7 +65,7 @@ test('opportunity normalization keeps motivated seller payload renderable', () =
     signal_summary: 'Tax/Foreclosure, Estate/Probate',
   });
 
-  assert.deepEqual(result, {
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     type: 'motivated_seller',
     score: 47,
     neighborhood: 'Brush Park',
