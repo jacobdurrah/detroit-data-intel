@@ -6,6 +6,22 @@ let investorSortField = 'rank_score';
 let investorSortDir = 'desc';
 let investorSearchText = '';
 
+function normalizeInvestorName(name) {
+  return String(name || '').trim().toLowerCase();
+}
+
+function investorMatchesName(inv, name) {
+  const target = normalizeInvestorName(name);
+  if (!target) return false;
+
+  const names = [inv.name, inv.canonical_name].concat(inv.aliases || []);
+  return names.some(n => normalizeInvestorName(n) === target);
+}
+
+function findInvestorByName(investors, name) {
+  return (investors || []).find(inv => investorMatchesName(inv, name)) || null;
+}
+
 // Load investors into the investor table
 async function loadInvestors() {
   const tbody = document.getElementById('investor-tbody');
@@ -189,7 +205,8 @@ async function showInvestorDetail(investorName) {
 
   detail.innerHTML = '<div class="loading">Loading investor details...</div>';
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
+  const data = APP.investors.length > 0 ? APP.investors : await fetchAPI('/api/investors');
+  const inv = Array.isArray(data) ? findInvestorByName(data, investorName) : data;
   if (!inv || inv.error) {
     detail.innerHTML = '<button class="btn btn-secondary" onclick="closeInvestorDetail()">Back to List</button>' +
       '<p>Investor not found.</p>';

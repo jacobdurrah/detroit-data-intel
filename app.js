@@ -56,6 +56,29 @@ function initAccordions() {
   });
 }
 
+function normalizeApiData(endpoint, data) {
+  if (Array.isArray(data)) return data;
+
+  if (data && typeof data === 'object') {
+    if (endpoint.indexOf('/api/neighborhoods') === 0) {
+      return Object.keys(data).map(name => Object.assign({ name }, data[name]));
+    }
+    return data;
+  }
+
+  return data;
+}
+
+function normalizeOpportunity(opp) {
+  const score = Number(opp.score || opp.motivation_score || 0);
+  return {
+    type: opp.type || 'motivated_seller',
+    score,
+    neighborhood: opp.neighborhood || opp.address || 'Unknown',
+    reasoning: opp.reasoning || opp.signal_summary || 'Potential motivated seller signal',
+  };
+}
+
 // Fetch helper with loading state management
 async function fetchAPI(endpoint) {
   try {
@@ -65,9 +88,9 @@ async function fetchAPI(endpoint) {
       return [];
     }
     const json = await resp.json();
-    // Unwrap {data: [...]} wrapper from static JSON files
+    // Unwrap static JSON payloads while preserving caller expectations.
     if (json && json.data && !Array.isArray(json) && typeof json.data === 'object') {
-      return json.data;
+      return normalizeApiData(endpoint, json.data);
     }
     return json;
   } catch (e) {
@@ -205,7 +228,7 @@ async function loadOpportunities() {
   if (!list) return;
 
   const data = await fetchAPI('/api/opportunities');
-  APP.opportunities = data || [];
+  APP.opportunities = Array.isArray(data) ? data.map(normalizeOpportunity) : [];
 
   if (APP.opportunities.length === 0) {
     list.innerHTML = '<div class="empty-state">No opportunities detected yet.</div>';
