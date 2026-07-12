@@ -85,7 +85,8 @@ function addChatMsg(role, html) {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
-  div.innerHTML = '<div class="chat-bubble">' + html + '</div>';
+  const bubbleHtml = role === 'user' ? escapeHtml(html) : html;
+  div.innerHTML = '<div class="chat-bubble">' + bubbleHtml + '</div>';
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
