@@ -58,6 +58,22 @@ test('grantee filter matches buyer names including apostrophes', () => {
   assert.match(filtered[0].grantee, /NEMO'S/);
 });
 
+test('price filters do not wipe blight-shaped records when the layer is blight', () => {
+  const context = runScript('filters.js', {
+    document: { getElementById() { return null; } },
+  });
+  const blight = [{
+    address: '100 MAIN',
+    ordinance_description: 'weeds',
+    ticket_issued_date: '2024-01-01',
+    fine_amount: 250,
+  }];
+  const asSales = context.applyClientFilters(blight, { minPrice: '500000' }, 'sales');
+  const asBlight = context.applyClientFilters(blight, { minPrice: '500000' }, 'blight');
+  assert.equal(asSales.length, 0);
+  assert.equal(asBlight.length, 1);
+});
+
 test('deed type WARRANTY matches WD instruments, not QC', () => {
   const context = runScript('filters.js', {
     document: { getElementById() { return null; } },

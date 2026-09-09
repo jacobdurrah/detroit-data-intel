@@ -115,10 +115,12 @@ async function loadLayer(name) {
   }
 
   // Fetch data. Static JSON rewrites ignore ?query filters, so apply them here.
+  // Only sales/investor layers have price/deed/grantee fields; other layers stay unfiltered.
   const raw = await fetchAPI(endpoint);
+  const records = Array.isArray(raw) ? raw : [];
   const data = typeof applyClientFilters === 'function'
-    ? applyClientFilters(Array.isArray(raw) ? raw : [])
-    : (raw || []);
+    ? applyClientFilters(records, null, name)
+    : records;
   APP.data[name] = data || [];
 
   // Remove existing layer if present

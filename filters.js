@@ -341,8 +341,13 @@ function recordMatchesFilters(item, filters) {
   return true;
 }
 
-function applyClientFilters(records, filters) {
+function applyClientFilters(records, filters, layerName) {
   if (!Array.isArray(records)) return [];
+  // Price/deed/grantee filters are sales-shaped. Applying them to blight/permits
+  // (no amt_sale_price / sale_instrument) would wipe those layers on Apply.
+  if (layerName && layerName !== 'sales' && layerName !== 'investors') {
+    return records;
+  }
   const active = filters || (typeof document !== 'undefined' ? getFilterState() : {});
   const hasAny = !!(active.neighborhood || active.grantee || active.startDate ||
     active.endDate || active.minPrice || active.maxPrice || active.deedType);
