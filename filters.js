@@ -46,7 +46,7 @@ async function populateInvestorAutocomplete() {
   if (datalist) {
     let optionsHtml = '';
     investors.forEach(inv => {
-      const name = inv.name || inv.investor_name || '';
+      const name = investorDisplayName(inv);
       if (name) {
         optionsHtml += '<option value="' + escapeAttr(name) + '">';
       }
@@ -56,8 +56,12 @@ async function populateInvestorAutocomplete() {
 
   // Also set up input-based autocomplete as fallback
   if (!datalist) {
-    setupCustomAutocomplete(input, investors.map(inv => inv.name || inv.investor_name || '').filter(Boolean));
+    setupCustomAutocomplete(input, investors.map(investorDisplayName).filter(Boolean));
   }
+}
+
+function investorDisplayName(inv) {
+  return (inv && (inv.name || inv.canonical_name || inv.investor_name || (inv.aliases && inv.aliases[0]))) || '';
 }
 
 // Set up a custom autocomplete dropdown for an input field
@@ -141,8 +145,8 @@ function wireFilterEvents() {
   });
 
   // Date range change events for live feedback
-  const dateFrom = document.getElementById('filter-date-from');
-  const dateTo = document.getElementById('filter-date-to');
+  const dateFrom = document.getElementById('filter-start-date');
+  const dateTo = document.getElementById('filter-end-date');
   if (dateFrom) {
     dateFrom.addEventListener('change', updateFilterSummary);
   }
@@ -151,8 +155,8 @@ function wireFilterEvents() {
   }
 
   // Price range change events
-  const priceMin = document.getElementById('filter-price-min');
-  const priceMax = document.getElementById('filter-price-max');
+  const priceMin = document.getElementById('filter-min-price');
+  const priceMax = document.getElementById('filter-max-price');
   if (priceMin) {
     priceMin.addEventListener('change', updateFilterSummary);
   }
@@ -252,6 +256,103 @@ function getActiveFilterParams() {
 
   const str = params.toString();
   return str || '';
+}
+
+// Static JSON rewrites ignore query strings. Apply the same filters client-side
+// after fetch so Map Apply/Clear actually changes visible markers.
+const DEED_TYPE_ALIASES = {
+  'WARRANTY': ['warranty', 'wd'],
+  'QUIT CLAIM': ['quit claim', 'quitclaim', 'qc'],
+  'COVENANT': ['covenant', 'cd']
+};
+
+function getFilterState() {
+  const valueOf = (id) => {
+    const el = document.getElementById(id);
+    return el && el.value ? el.value : '';
+  };
+  return {
+    neighborhood: valueOf('filter-neighborhood'),
+    grantee: valueOf('filter-grantee'),
+    startDate: valueOf('filter-start-date'),
+    endDate: valueOf('filter-end-date'),
+    minPrice: valueOf('filter-min-price'),
+    maxPrice: valueOf('filter-max-price'),
+    deedType: valueOf('filter-deed-type')
+  };
+}
+
+function recordFilterDate(item) {
+  const raw = item.sale_date || item.issued_date || item.ticket_issued_date ||
+    item.called_at || item.call_date_time || item.submitted_date || '';
+  return String(raw).slice(0, 10);
+}
+
+function recordFilterPrice(item) {
+  const p = item.amt_sale_price ?? item.price ?? item.sale_price;
+  if (p == null || p === '') return null;
+  const n = Number(p);
+  return Number.isNaN(n) ? null : n;
+}
+
+function recordMatchesFilters(item, filters) {
+  if (!item) return false;
+  filters = filters || {};
+
+  if (filters.neighborhood) {
+    const q = filters.neighborhood.toLowerCase();
+    const hood = (item.neighborhood || item.ecf_neighborhood || '').toLowerCase();
+    if (!hood.includes(q)) return false;
+  }
+
+  if (filters.grantee) {
+    const q = filters.grantee.toLowerCase();
+    const names = [item.grantee, item.grantor, item.investor_name, item.owner_name, item.owner];
+    if (!names.some(n => String(n || '').toLowerCase().includes(q))) return false;
+  }
+
+  if (filters.startDate) {
+    const d = recordFilterDate(item);
+    if (!d || d < filters.startDate) return false;
+  }
+  if (filters.endDate) {
+    const d = recordFilterDate(item);
+    if (!d || d > filters.endDate) return false;
+  }
+
+  if (filters.minPrice) {
+    const p = recordFilterPrice(item);
+    if (p == null || p < Number(filters.minPrice)) return false;
+  }
+  if (filters.maxPrice) {
+    const p = recordFilterPrice(item);
+    if (p == null || p > Number(filters.maxPrice)) return false;
+  }
+
+  if (filters.deedType) {
+    const aliases = DEED_TYPE_ALIASES[filters.deedType] || [String(filters.deedType).toLowerCase()];
+    const instrument = String(item.sale_instrument || '').toLowerCase();
+    const term = String(item.term_of_sale || '').toLowerCase();
+    if (!aliases.some(a => instrument === a || instrument.includes(a) || term.includes(a))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function applyClientFilters(records, filters, layerName) {
+  if (!Array.isArray(records)) return [];
+  // Price/deed/grantee filters are sales-shaped. Applying them to blight/permits
+  // (no amt_sale_price / sale_instrument) would wipe those layers on Apply.
+  if (layerName && layerName !== 'sales' && layerName !== 'investors') {
+    return records;
+  }
+  const active = filters || (typeof document !== 'undefined' ? getFilterState() : {});
+  const hasAny = !!(active.neighborhood || active.grantee || active.startDate ||
+    active.endDate || active.minPrice || active.maxPrice || active.deedType);
+  if (!hasAny) return records;
+  return records.filter(item => recordMatchesFilters(item, active));
 }
 
 // Update the filter summary display
