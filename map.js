@@ -114,8 +114,11 @@ async function loadLayer(name) {
     endpoint += '?' + filterParams;
   }
 
-  // Fetch data
-  const data = await fetchAPI(endpoint);
+  // Fetch data. Static JSON rewrites ignore ?query filters, so apply them here.
+  const raw = await fetchAPI(endpoint);
+  const data = typeof applyClientFilters === 'function'
+    ? applyClientFilters(Array.isArray(raw) ? raw : [])
+    : (raw || []);
   APP.data[name] = data || [];
 
   // Remove existing layer if present

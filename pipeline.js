@@ -22,14 +22,41 @@ async function loadPipeline() {
   if (hoodFilter && hoodFilter.value) url += '&neighborhood=' + encodeURIComponent(hoodFilter.value);
 
   const data = await fetchAPI(url);
-  APP.pipeline = data || [];
+  const records = Array.isArray(data) ? data : [];
   pipelineLoaded = true;
+
+  // Populate neighborhood options from the full payload, then filter locally.
+  // Static /api/pipeline rewrites ignore min_score and neighborhood query params.
+  APP.pipeline = records;
+  populatePipelineNeighborhoods();
+  APP.pipeline = applyPipelineClientFilters(records);
 
   renderPipelineStats();
   renderPipelineTable();
   renderPipelineCards();
-  populatePipelineNeighborhoods();
   wirePipelineControls();
+}
+
+function getDealScore(deal) {
+  const score = deal && (deal.motivation_score ?? deal.score);
+  const n = Number(score);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+function applyPipelineClientFilters(records) {
+  let filtered = Array.isArray(records) ? records.slice() : [];
+  const minScoreEl = document.getElementById('pipeline-min-score');
+  const hoodEl = document.getElementById('pipeline-neighborhood-filter');
+  const minScore = minScoreEl && minScoreEl.value !== '' ? Number(minScoreEl.value) : null;
+  const hood = hoodEl && hoodEl.value ? hoodEl.value : '';
+
+  if (minScore != null && !Number.isNaN(minScore)) {
+    filtered = filtered.filter(d => getDealScore(d) >= minScore);
+  }
+  if (hood) {
+    filtered = filtered.filter(d => (d.neighborhood || '') === hood);
+  }
+  return filtered;
 }
 
 function renderPipelineStats() {

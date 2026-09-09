@@ -94,8 +94,18 @@ function addMapButton(data, label) {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'chat-msg bot';
-  div.innerHTML = '<div class="chat-bubble"><button class="chat-map-btn" onclick=\'showOnMap(' + 
-    JSON.stringify(data).replace(/'/g, "\\'") + ')\'> 🗺️ ' + label + ' (' + data.length + ' properties)</button></div>';
+
+  // Do not serialize points into an HTML attribute. Apostrophes in API
+  // names (NEMO'S, O'NEILL) break single-quoted onclick handlers.
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  const btn = document.createElement('button');
+  btn.className = 'chat-map-btn';
+  btn.type = 'button';
+  btn.textContent = ' 🗺️ ' + (label || 'Show on map') + ' (' + (data ? data.length : 0) + ' properties)';
+  btn.addEventListener('click', () => showOnMap(data));
+  bubble.appendChild(btn);
+  div.appendChild(bubble);
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
@@ -113,18 +123,18 @@ function showOnMap(points) {
   APP.chatLayer = L.layerGroup().addTo(APP.map);
 
   const bounds = [];
-  points.forEach(p => {
+  (points || []).forEach(p => {
     if (!p.lat || !p.lng) return;
     const marker = L.circleMarker([p.lat, p.lng], {
       radius: 8, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 0.9
     });
-    let popup = '<div class="map-popup"><h4>' + (p.address || 'Property') + '</h4>';
+    let popup = '<div class="map-popup"><h4>' + escapeHtml(p.address || 'Property') + '</h4>';
     if (p.price) popup += '<p><strong>Price:</strong> $' + Number(p.price).toLocaleString() + '</p>';
-    if (p.buyer) popup += '<p><strong>Buyer:</strong> ' + p.buyer + '</p>';
-    if (p.seller) popup += '<p><strong>Seller:</strong> ' + p.seller + '</p>';
-    if (p.date) popup += '<p><strong>Date:</strong> ' + p.date + '</p>';
-    if (p.neighborhood) popup += '<p><strong>Neighborhood:</strong> ' + p.neighborhood + '</p>';
-    if (p.info) popup += '<p>' + p.info + '</p>';
+    if (p.buyer) popup += '<p><strong>Buyer:</strong> ' + escapeHtml(p.buyer) + '</p>';
+    if (p.seller) popup += '<p><strong>Seller:</strong> ' + escapeHtml(p.seller) + '</p>';
+    if (p.date) popup += '<p><strong>Date:</strong> ' + escapeHtml(p.date) + '</p>';
+    if (p.neighborhood) popup += '<p><strong>Neighborhood:</strong> ' + escapeHtml(p.neighborhood) + '</p>';
+    if (p.info) popup += '<p>' + escapeHtml(p.info) + '</p>';
     popup += '</div>';
     marker.bindPopup(popup);
     marker.addTo(APP.chatLayer);
