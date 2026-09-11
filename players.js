@@ -268,22 +268,44 @@ function closeInvestorDetail() {
   if (cardsWrap) cardsWrap.classList.remove('hidden');
 }
 
+function investorMatchKeys(investorName) {
+  const keys = new Set();
+  const add = (v) => {
+    const s = String(v || '').trim().toLowerCase();
+    if (s) keys.add(s);
+  };
+  add(investorName);
+  const needle = String(investorName || '').trim().toLowerCase();
+  for (const inv of (APP.investors || [])) {
+    const names = [inv.name, inv.canonical_name].concat(inv.aliases || []);
+    if (names.some(n => String(n || '').trim().toLowerCase() === needle)) {
+      names.forEach(add);
+    }
+  }
+  return keys;
+}
+
+// Static /api/sales rewrites ignore ?grantee=, and APP.data.sales is the
+// full city file once the Map tab's default Sales layer loads. Filter here.
+function filterSalesForInvestor(sales, investorName) {
+  const keys = investorMatchKeys(investorName);
+  return (sales || []).filter(s => {
+    const lat = s.latitude || s._lat || s.lat;
+    const lng = s.longitude || s._lng || s.lng;
+    if (lat == null || lng == null || lat === '' || lng === '') return false;
+    const grantee = String(s.grantee || s.investor_name || '').trim().toLowerCase();
+    return keys.has(grantee);
+  });
+}
+
 // Show investor properties on map
 async function showInvestorOnMap(investorName) {
   // Switch to map tab
   const mapBtn = document.querySelector('.tab-btn[data-tab="map"]');
   if (mapBtn) mapBtn.click();
 
-  const inv = await fetchAPI('/api/investors/' + encodeURIComponent(investorName));
-  if (!inv || inv.error) return;
-
-  // Build property list from timeline with coords from sales
-  const salesData = APP.data['sales'] || await fetchAPI('/api/sales?grantee=' + encodeURIComponent(investorName) + '&limit=500');
-  const properties = salesData.filter(s => {
-    const lat = s.latitude || s._lat;
-    const lng = s.longitude || s._lng;
-    return lat && lng;
-  });
+  const salesData = APP.data['sales'] || await fetchAPI('/api/sales');
+  const properties = filterSalesForInvestor(salesData, investorName);
 
   if (typeof highlightInvestorProperties === 'function') {
     highlightInvestorProperties(investorName, properties);

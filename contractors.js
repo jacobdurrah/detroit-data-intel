@@ -158,7 +158,10 @@ function wireContractorControls() {
 }
 
 function showContractorDetail(idx) {
-  const c = APP.contractors[idx];
+  // View buttons are indexed against the filtered list. Looking up
+  // APP.contractors[idx] after search/specialty filter opens the wrong
+  // contractor (idx 0 is the first search hit, not the top unfiltered row).
+  const c = getFilteredContractors()[idx];
   if (!c) return;
 
   const detail = document.getElementById('contractor-detail');
